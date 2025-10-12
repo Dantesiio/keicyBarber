@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'bloc/home/home_bloc.dart';
-import 'bloc/home/home_event.dart';
-import 'bloc/navigation/navigation_cubit.dart';
-import 'screens/home_screen.dart';
-import 'screens/schedule_screen.dart';
-import 'screens/appointments_screen.dart';
-import 'screens/profile_screen.dart';
+import 'presentation/bloc/home/home_bloc.dart';
+import 'presentation/bloc/home/home_event.dart';
+import 'presentation/bloc/navigation/navigation_cubit.dart';
+import 'presentation/screens/welcome_screen.dart';
+import 'presentation/screens/home_screen.dart';
+import 'presentation/screens/login_screen.dart';
+import 'presentation/screens/register_screen.dart';
+import 'presentation/screens/schedule_screen.dart';
+import 'presentation/screens/appointments_screen.dart';
+import 'presentation/screens/profile_screen.dart';
+import 'domain/usecases/get_services.dart';
+import 'data/repositories/service_repository_impl.dart';
 
 void main() {
   runApp(const MyApp());
@@ -18,9 +23,14 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final primaryYellow = const Color(0xFFF2B705);
+    final serviceRepository = ServiceRepositoryImpl();
+    final getServicesUseCase = GetServices(serviceRepository);
+
     return MultiBlocProvider(
       providers: [
-        BlocProvider<HomeBloc>(create: (context) => HomeBloc()..add(LoadHome())),
+        BlocProvider<HomeBloc>(
+          create: (context) => HomeBloc(getServices: getServicesUseCase)..add(LoadHome()),
+        ),
         BlocProvider<NavigationCubit>(create: (context) => NavigationCubit()),
       ],
       child: MaterialApp(
@@ -31,7 +41,12 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
           scaffoldBackgroundColor: Colors.white,
         ),
-        home: const RootScreen(),
+        home: const WelcomeScreen(),
+        routes: {
+          '/login': (context) => const LoginScreen(),
+          '/register': (context) => const RegisterScreen(),
+          '/home': (context) => const RootScreen(),
+        },
       ),
     );
   }
@@ -49,30 +64,44 @@ class RootScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<NavigationCubit, int>(builder: (context, index) {
-      return Scaffold(
-        body: SafeArea(child: _pages[index]),
-        bottomNavigationBar: Container(
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 6)],
+    return BlocBuilder<NavigationCubit, int>(
+      builder: (context, index) {
+        return Scaffold(
+          body: SafeArea(child: _pages[index]),
+          bottomNavigationBar: Container(
+            decoration: const BoxDecoration(
+              color: Colors.white,
+              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 6)],
+            ),
+            child: BottomNavigationBar(
+              currentIndex: index,
+              onTap: (i) => context.read<NavigationCubit>().setPage(i),
+              type: BottomNavigationBarType.fixed,
+              selectedItemColor: Theme.of(context).colorScheme.primary,
+              unselectedItemColor: Colors.black54,
+              showUnselectedLabels: true,
+              items: const [
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.home_outlined),
+                  label: 'Inicio',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.calendar_month_outlined),
+                  label: 'Agendar',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.schedule_outlined),
+                  label: 'Citas',
+                ),
+                BottomNavigationBarItem(
+                  icon: Icon(Icons.person_outline),
+                  label: 'Perfil',
+                ),
+              ],
+            ),
           ),
-          child: BottomNavigationBar(
-            currentIndex: index,
-            onTap: (i) => context.read<NavigationCubit>().setPage(i),
-            type: BottomNavigationBarType.fixed,
-            selectedItemColor: Theme.of(context).colorScheme.primary,
-            unselectedItemColor: Colors.black54,
-            showUnselectedLabels: true,
-            items: const [
-              BottomNavigationBarItem(icon: Icon(Icons.home_outlined), label: 'Inicio'),
-              BottomNavigationBarItem(icon: Icon(Icons.calendar_month_outlined), label: 'Agendar'),
-              BottomNavigationBarItem(icon: Icon(Icons.schedule_outlined), label: 'Citas'),
-              BottomNavigationBarItem(icon: Icon(Icons.person_outline), label: 'Perfil'),
-            ],
-          ),
-        ),
-      );
-    });
+        );
+      },
+    );
   }
 }

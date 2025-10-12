@@ -56,12 +56,9 @@ class ProfileScreen extends StatelessWidget {
                         children: [
                           CircleAvatar(
                             backgroundColor: Colors.black12,
-                            child: const Icon(
-                              Icons.verified,
-                              color: Colors.white,
-                            ),
+                            child: Icon(Icons.verified, color: Colors.white),
                           ),
-                          const Text(
+                          Text(
                             '250',
                             style: TextStyle(
                               fontSize: 22,
