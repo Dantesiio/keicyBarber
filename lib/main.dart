@@ -12,8 +12,23 @@ import 'presentation/screens/appointments_screen.dart';
 import 'presentation/screens/profile_screen.dart';
 import 'domain/usecases/get_services.dart';
 import 'data/repositories/service_repository_impl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'data/datasources/auth_data_source.dart';
+import 'data/datasources/profile_data_source.dart';
+import 'data/repositories/auth_repository_impl.dart';
+import 'domain/usecases/register_user.dart';
+import 'presentation/bloc/auth/auth_bloc.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized(); // Asegurar inicialización
+
+  // Inicializar Supabase
+  await Supabase.initialize(
+    url: 'https://sjczmvfxzaajruyxgrhy.supabase.co',
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqY3ptdmZ4emFhanJ1eXhncmh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNzE1MzQsImV4cCI6MjA3NDc0NzUzNH0.gjRo2Jd2ielDgZJ60B2m0AzzOlJpi0MAsc_7AtVtARs',
+  );
+
   runApp(const MyApp());
 }
 
@@ -26,12 +41,26 @@ class MyApp extends StatelessWidget {
     final serviceRepository = ServiceRepositoryImpl();
     final getServicesUseCase = GetServices(serviceRepository);
 
+    final supabaseClient = Supabase.instance.client;
+    final authDataSource = AuthDataSourceImpl(supabaseClient);
+    final profileDataSource = ProfileDataSourceImpl(supabaseClient);
+    final authRepository = AuthRepositoryImpl(
+      authDataSource: authDataSource,
+      profileDataSource: profileDataSource,
+    );
+    final registerUserUseCase = RegisterUser(authRepository);
+
     return MultiBlocProvider(
       providers: [
         BlocProvider<HomeBloc>(
-          create: (context) => HomeBloc(getServices: getServicesUseCase)..add(LoadHome()),
+          create: (context) =>
+              HomeBloc(getServices: getServicesUseCase)..add(LoadHome()),
         ),
         BlocProvider<NavigationCubit>(create: (context) => NavigationCubit()),
+        BlocProvider<AuthBloc>(
+          create: (context) =>
+              AuthBloc(registerUserUseCase: registerUserUseCase),
+        ),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
