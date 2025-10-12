@@ -169,13 +169,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
                           ),
                           const SizedBox(height: 20),
                           ElevatedButton(
-                            onPressed: () {
-                              if (_formKey.currentState?.validate() ?? false) {
-                                Navigator.of(
-                                  context,
-                                ).pushReplacementNamed('/home');
-                              }
-                            },
+                            onPressed: _submitForm,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: yellow,
                               foregroundColor: Colors.black,
