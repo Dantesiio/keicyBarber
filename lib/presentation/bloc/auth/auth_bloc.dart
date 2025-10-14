@@ -46,11 +46,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(AuthLoading());
     try {
+      print('--- PASO 2: BLOC --- Recibido evento, llamando al caso de uso.');
       print('[AuthBloc] Intentando login para: ${event.email}');
       await loginUserUseCase.call(event.email, event.password);
       print('[AuthBloc] Login exitoso para: ${event.email}');
       emit(AuthSuccess());
     } catch (e) {
+      print('--- PASO 4: BLOC --- ¡ERROR CAPTURADO! ${e.toString()}');
       print('[AuthBloc] Error en login: ${e.toString()}');
       emit(AuthFailure(e.toString()));
     }

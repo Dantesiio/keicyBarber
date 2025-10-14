@@ -24,13 +24,17 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 
   void _submitForm() {
+    // La validación ahora está aquí dentro
     if (_formKey.currentState?.validate() ?? false) {
+      print('--- PASO 1: VISTA --- Evento LoginSubmitted enviado a BLoC.');
       context.read<AuthBloc>().add(
         LoginSubmitted(
           email: _emailController.text,
           password: _passwordController.text,
         ),
       );
+    } else {
+      print('--- VISTA --- La validación del formulario falló.');
     }
   }
 
@@ -60,6 +64,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    // ... (tu widget Container no cambia)
                     const SizedBox(height: 24),
                     Container(
                       width: double.infinity,
@@ -108,13 +113,15 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 20),
                           ElevatedButton(
-                            onPressed: _submitForm, // <-- LLAMAR AL MÉTODO
+                            // Asegúrate de que esta línea llama a _submitForm
+                            onPressed: _submitForm,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: yellow,
                               foregroundColor: Colors.black,
                               padding: const EdgeInsets.symmetric(vertical: 14),
                             ),
-                            child: const Text('Iniciar sesión'),
+                            // ===== CAMBIO VISUAL DE PRUEBA =====
+                            child: const Text('PROBAR LOGIN'),
                           ),
                           const SizedBox(height: 12),
                           TextButton(

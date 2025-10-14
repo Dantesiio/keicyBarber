@@ -39,14 +39,30 @@ class AuthDataSourceImpl implements AuthDataSource {
   @override
   Future<void> signInWithEmailAndPassword(String email, String password) async {
     try {
-      print(
-        '[AuthDataSource] Enviando petición signIn a Supabase para: $email',
+      print('--- PASO 3: DATA SOURCE --- Enviando petición a Supabase.');
+      final AuthResponse response = await client.auth.signInWithPassword(
+        email: email,
+        password: password,
       );
-      await client.auth.signInWithPassword(email: email, password: password);
+
+      // --- AÑADIR ESTOS PRINTS DE DIAGNÓSTICO ---
+      print('================ SUPABASE RESPONSE ================');
+      print('Response Session: ${response.session}');
+      print('Response User: ${response.user}');
+      print('===================================================');
+
+      if (response.session == null) {
+        print('[AuthDataSource] Error en SignIn: Credenciales inválidas.');
+        throw const AuthException('Invalid login credentials');
+      }
+
       print('[AuthDataSource] SignIn exitoso para: $email');
     } on AuthException catch (e) {
       print('[AuthDataSource] AuthException en SignIn: ${e.message}');
       throw AuthException(e.message);
+    } catch (e) {
+      print('[AuthDataSource] Error inesperado en SignIn: ${e.toString()}');
+      throw Exception('An unexpected error occurred: ${e.toString()}');
     }
   }
 }
