@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 abstract class AuthDataSource {
   Future<String> signUp(String email, String password);
+  Future<void> signInWithEmailAndPassword(String email, String password);
 }
 
 class AuthDataSourceImpl implements AuthDataSource {
@@ -31,6 +32,20 @@ class AuthDataSourceImpl implements AuthDataSource {
       }
     } on AuthException catch (e) {
       print('[AuthDataSource] AuthException de Supabase: ${e.message}');
+      throw AuthException(e.message);
+    }
+  }
+
+  @override
+  Future<void> signInWithEmailAndPassword(String email, String password) async {
+    try {
+      print(
+        '[AuthDataSource] Enviando petición signIn a Supabase para: $email',
+      );
+      await client.auth.signInWithPassword(email: email, password: password);
+      print('[AuthDataSource] SignIn exitoso para: $email');
+    } on AuthException catch (e) {
+      print('[AuthDataSource] AuthException en SignIn: ${e.message}');
       throw AuthException(e.message);
     }
   }

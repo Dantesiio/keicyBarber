@@ -21,4 +21,9 @@ class AuthRepositoryImpl implements AuthRepository {
     profile.id = userId;
     await profileDataSource.createProfile(profile);
   }
+
+  @override
+  Future<void> signInWithEmailAndPassword(String email, String password) async {
+    return await authDataSource.signInWithEmailAndPassword(email, password);
+  }
 }

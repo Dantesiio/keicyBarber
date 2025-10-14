@@ -11,6 +11,7 @@ import 'presentation/screens/schedule_screen.dart';
 import 'presentation/screens/appointments_screen.dart';
 import 'presentation/screens/profile_screen.dart';
 import 'domain/usecases/get_services.dart';
+import 'domain/usecases/login_user.dart';
 import 'data/repositories/service_repository_impl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'data/datasources/auth_data_source.dart';
@@ -49,6 +50,7 @@ class MyApp extends StatelessWidget {
       profileDataSource: profileDataSource,
     );
     final registerUserUseCase = RegisterUser(authRepository);
+    final loginUserUseCase = LoginUser(authRepository);
 
     return MultiBlocProvider(
       providers: [
@@ -58,8 +60,10 @@ class MyApp extends StatelessWidget {
         ),
         BlocProvider<NavigationCubit>(create: (context) => NavigationCubit()),
         BlocProvider<AuthBloc>(
-          create: (context) =>
-              AuthBloc(registerUserUseCase: registerUserUseCase),
+          create: (context) => AuthBloc(
+            registerUserUseCase: registerUserUseCase,
+            loginUserUseCase: loginUserUseCase,
+          ),
         ),
       ],
       child: MaterialApp(
