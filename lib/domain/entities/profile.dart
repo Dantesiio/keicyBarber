@@ -26,4 +26,18 @@ class Profile {
       'phone': phone,
     };
   }
+
+  factory Profile.fromJson(Map<String, dynamic> json) {
+    return Profile(
+      id: json['id'] as String,
+      firstName: json['first_name'] as String,
+      lastName: json['last_name'] as String,
+      email:
+          json['email'] as String, // Asumimos que el email se añadirá al JSON
+      birthDate: json['birth_date'] != null
+          ? DateTime.parse(json['birth_date'] as String)
+          : null,
+      phone: json['phone'] as String?,
+    );
+  }
 }

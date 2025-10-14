@@ -19,6 +19,10 @@ import 'data/datasources/profile_data_source.dart';
 import 'data/repositories/auth_repository_impl.dart';
 import 'domain/usecases/register_user.dart';
 import 'presentation/bloc/auth/auth_bloc.dart';
+import 'data/repositories/profile_repository_impl.dart';
+import 'domain/usecases/get_profile.dart';
+import 'presentation/bloc/profile/profile_bloc.dart';
+import 'presentation/bloc/profile/profile_event.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized(); // Asegurar inicialización
@@ -51,6 +55,11 @@ class MyApp extends StatelessWidget {
     );
     final registerUserUseCase = RegisterUser(authRepository);
     final loginUserUseCase = LoginUser(authRepository);
+    final profileRepository = ProfileRepositoryImpl(
+      profileDataSource: profileDataSource,
+      client: supabaseClient,
+    );
+    final getProfileUseCase = GetProfile(profileRepository);
 
     return MultiBlocProvider(
       providers: [
@@ -64,6 +73,11 @@ class MyApp extends StatelessWidget {
             registerUserUseCase: registerUserUseCase,
             loginUserUseCase: loginUserUseCase,
           ),
+        ),
+        BlocProvider<ProfileBloc>(
+          create: (context) =>
+              ProfileBloc(getProfileUseCase: getProfileUseCase)
+                ..add(LoadUserProfile()),
         ),
       ],
       child: MaterialApp(
