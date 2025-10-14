@@ -29,6 +29,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         lastName: event.lastName,
         email: event.email,
         phone: event.phone,
+        birthDate: event.birthDate,
       );
 
       await registerUserUseCase.call(profile, event.password);
