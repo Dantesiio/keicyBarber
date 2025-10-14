@@ -21,6 +21,9 @@ class _RegisterScreenState extends State<RegisterScreen> {
   final _passwordController = TextEditingController();
   final _confirmController = TextEditingController();
 
+  final _birthDateController = TextEditingController();
+  DateTime? _selectedDate;
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -29,7 +32,26 @@ class _RegisterScreenState extends State<RegisterScreen> {
     _phoneController.dispose();
     _passwordController.dispose();
     _confirmController.dispose();
+    _birthDateController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickDate(BuildContext context) async {
+    final initialDate = DateTime.now();
+    final newDate = await showDatePicker(
+      context: context,
+      initialDate: initialDate,
+      firstDate: DateTime(1900),
+      lastDate: initialDate,
+    );
+
+    if (newDate != null) {
+      setState(() {
+        _selectedDate = newDate;
+        _birthDateController.text =
+            '${newDate.day}/${newDate.month}/${newDate.year}';
+      });
+    }
   }
 
   void _submitForm() {
@@ -48,6 +70,7 @@ class _RegisterScreenState extends State<RegisterScreen> {
           email: _emailController.text,
           phone: _phoneController.text,
           password: _passwordController.text,
+          birthDate: _selectedDate,
         ),
       );
     }
@@ -145,6 +168,17 @@ class _RegisterScreenState extends State<RegisterScreen> {
                               labelText: 'Teléfono',
                             ),
                           ),
+                          TextFormField(
+                            controller: _birthDateController,
+                            decoration: const InputDecoration(
+                              labelText: 'Fecha de nacimiento',
+                              suffixIcon: Icon(Icons.calendar_today),
+                            ),
+                            readOnly:
+                                true, // Para evitar que el teclado aparezca
+                            onTap: () => _pickDate(context),
+                          ),
+                          const SizedBox(height: 12),
                           const SizedBox(height: 12),
                           TextFormField(
                             controller: _passwordController,

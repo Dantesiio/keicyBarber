@@ -12,6 +12,7 @@ class RegisterSubmitted extends AuthEvent {
   final String email;
   final String phone;
   final String password;
+  final DateTime? birthDate;
 
   const RegisterSubmitted({
     required this.firstName,
@@ -19,6 +20,7 @@ class RegisterSubmitted extends AuthEvent {
     required this.email,
     required this.phone,
     required this.password,
+    this.birthDate,
   });
 }
 
