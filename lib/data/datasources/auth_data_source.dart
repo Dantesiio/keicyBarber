@@ -12,11 +12,17 @@ class AuthDataSourceImpl implements AuthDataSource {
   @override
   Future<String> signUp(String email, String password) async {
     try {
+      print(
+        '[AuthDataSource] Enviando petición signUp a Supabase para: $email',
+      );
       final response = await client.auth.signUp(
         email: email,
         password: password,
       );
       if (response.user != null) {
+        print(
+          '[AuthDataSource] Supabase devolvió el User ID: ${response.user!.id}',
+        );
         return response.user!.id;
       } else {
         throw const AuthException(
@@ -24,6 +30,7 @@ class AuthDataSourceImpl implements AuthDataSource {
         );
       }
     } on AuthException catch (e) {
+      print('[AuthDataSource] AuthException de Supabase: ${e.message}');
       throw AuthException(e.message);
     }
   }
