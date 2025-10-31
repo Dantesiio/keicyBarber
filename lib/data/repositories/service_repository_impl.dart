@@ -13,6 +13,7 @@ class ServiceRepositoryImpl implements ServiceRepository {
       Service(id: '2', name: 'Barba', description: 'Arreglo de barba', durationMinutes: 30, price: 25000),
       Service(id: '3', name: 'Tinte', description: 'Tinte de cabello', durationMinutes: 90, price: 45000),
       Service(id: '4', name: 'Masaje', description: 'Masaje relajante', durationMinutes: 30, price: 20000),
+      Service(id: '5', name: 'Peinado especial', description: 'Peinado para eventos', durationMinutes: 120, price: 60000),
     ];
   }
 
