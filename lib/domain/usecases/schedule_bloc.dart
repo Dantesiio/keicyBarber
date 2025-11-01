@@ -1,6 +1,4 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
-
 import '../../../domain/entities/service.dart';
 import '../../../domain/usecases/get_services.dart';
 
@@ -25,7 +23,10 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
     }
   }
 
-  void _onToggleServiceSelection(ToggleServiceSelection event, Emitter<ScheduleState> emit) {
+  void _onToggleServiceSelection(
+    ToggleServiceSelection event,
+    Emitter<ScheduleState> emit,
+  ) {
     final currentState = state;
     if (currentState is ScheduleLoaded) {
       final currentSelection = currentState.selectedServiceIds;
