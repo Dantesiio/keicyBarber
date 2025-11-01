@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
-import 'package:keicybarber/domain/usecases/schedule_bloc.dart';
+import 'package:keicybarber/presentation/screens/schedule_location_screen.dart';
 import '../../data/repositories/service_repository_impl.dart';
+import '../bloc/schedule/schedule_bloc.dart';
 import '../../domain/usecases/get_services.dart';
 
 class ScheduleScreen extends StatelessWidget {
@@ -211,8 +212,9 @@ class _ScheduleView extends StatelessWidget {
                 padding: const EdgeInsets.all(16.0),
                 child: ElevatedButton(
                   onPressed: () {
-                    // TODO: Navegar a la siguiente pantalla (F5: Selección de Sede)
-                    // Puedes acceder a los servicios seleccionados con: state.selectedServiceIds
+                    Navigator.of(context).push(MaterialPageRoute(
+                      builder: (_) => ScheduleLocationScreen(selectedServiceIds: state.selectedServiceIds),
+                    ));
                   },
                   style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50), backgroundColor: yellow, foregroundColor: Colors.black),
                   child: const Text('Continuar'),

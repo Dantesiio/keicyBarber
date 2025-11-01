@@ -1,5 +1,5 @@
 import 'package:keicybarber/domain/entities/barber.dart';
-import 'package:keicybarber/domain/usecases/barber_repository.dart';
+import 'package:keicybarber/domain/repositories/barber_repository.dart';
 
 class GetBarbers {
   final BarberRepository repository;

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:keicybarber/presentation/screens/schedule_location_screen.dart';
 import 'presentation/bloc/home/home_bloc.dart';
 import 'presentation/bloc/home/home_event.dart';
 import 'presentation/bloc/navigation/navigation_cubit.dart';
@@ -46,6 +47,10 @@ class MyApp extends StatelessWidget {
           '/login': (context) => const LoginScreen(),
           '/register': (context) => const RegisterScreen(),
           '/home': (context) => const RootScreen(),
+          '/schedule': (context) => const ScheduleScreen(),
+          '/schedule-location': (context) => ScheduleLocationScreen(selectedServiceIds: <String>{}),
+          '/appointments': (context) => const AppointmentsScreen(),
+          '/profile': (context) => const ProfileScreen(),
         },
       ),
     );

@@ -1,8 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 
-import '../../../domain/entities/service.dart';
-import '../../../domain/usecases/get_services.dart';
+import '../../../../domain/entities/service.dart';
+import '../../../../domain/usecases/get_services.dart';
 
 part 'schedule_event.dart';
 part 'schedule_state.dart';
