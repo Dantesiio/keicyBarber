@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'presentation/bloc/home/home_bloc.dart';
 import 'presentation/bloc/home/home_event.dart';
 import 'presentation/bloc/navigation/navigation_cubit.dart';
@@ -13,7 +14,17 @@ import 'presentation/screens/profile_screen.dart';
 import 'domain/usecases/get_services.dart';
 import 'data/repositories/service_repository_impl.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  await Supabase.initialize(
+    url: 'https://sjczmvfxzaajruyxgrhy.supabase.co',
+    anonKey:
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqY3ptdmZ4emFhanJ1eXhncmh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNzE1MzQsImV4cCI6MjA3NDc0NzUzNH0.gjRo2Jd2ielDgZJ60B2m0AzzOlJpi0MAsc_7AtVtARs',
+  );
+
+  print("Supabase inicializado correctamente");
+
   runApp(const MyApp());
 }
 
@@ -29,7 +40,8 @@ class MyApp extends StatelessWidget {
     return MultiBlocProvider(
       providers: [
         BlocProvider<HomeBloc>(
-          create: (context) => HomeBloc(getServices: getServicesUseCase)..add(LoadHome()),
+          create: (context) =>
+              HomeBloc(getServices: getServicesUseCase)..add(LoadHome()),
         ),
         BlocProvider<NavigationCubit>(create: (context) => NavigationCubit()),
       ],
