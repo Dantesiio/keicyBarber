@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:keicybarber/presentation/screens/schedule_screen.dart';
+import 'package:keicybarber/presentation/bloc/navigation/navigation_cubit.dart';
 import '../bloc/home/home_bloc.dart';
 import '../bloc/home/home_state.dart';
 
@@ -121,7 +123,9 @@ class HomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      context.read<NavigationCubit>().setPage(1);
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: yellow,
                       foregroundColor: Colors.black,
