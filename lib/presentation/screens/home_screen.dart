@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:keicybarber/presentation/screens/schedule_screen.dart';
 import 'package:keicybarber/presentation/bloc/navigation/navigation_cubit.dart';
 import '../bloc/home/home_bloc.dart';
 import '../bloc/home/home_state.dart';
