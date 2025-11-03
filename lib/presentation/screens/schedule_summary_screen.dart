@@ -37,8 +37,12 @@ class ScheduleSummaryScreen extends StatelessWidget {
           barberId: selectedBarberId,
         )),
       child: Scaffold(
-        appBar: AppBar(backgroundColor: const Color(0xFFF2B705), elevation: 0, iconTheme: const IconThemeData(color: Colors.black)),
-        body: _ScheduleSummaryView(selectedDateTime: selectedDateTime), // <-- pásalo
+        appBar: AppBar(
+          backgroundColor: const Color(0xFFF2B705),
+          elevation: 0,
+          iconTheme: const IconThemeData(color: Colors.black),
+        ),
+        body: _ScheduleSummaryView(selectedDateTime: selectedDateTime),
       ),
     );
   }
@@ -48,11 +52,16 @@ class _ScheduleSummaryView extends StatelessWidget {
   const _ScheduleSummaryView({required this.selectedDateTime});
   final DateTime selectedDateTime;
 
+  String _capitalize(String s) =>
+      s.isNotEmpty ? s[0].toUpperCase() + s.substring(1) : s;
+
   @override
   Widget build(BuildContext context) {
     final yellow = const Color(0xFFF2B705);
-    final currencyFormatter = NumberFormat.currency(locale: 'es_CO', symbol: r'$', decimalDigits: 0);
-    final dateStr = DateFormat('EEE d MMM', 'es_CO').format(selectedDateTime);
+    final currencyFormatter =
+        NumberFormat.currency(locale: 'es_CO', symbol: r'$', decimalDigits: 0);
+    final dateLong =
+        _capitalize(DateFormat("EEEE d 'de' MMMM y", 'es_CO').format(selectedDateTime));
     final timeStr = DateFormat('h:mm a', 'es_CO').format(selectedDateTime);
 
     return BlocConsumer<SummaryBloc, SummaryState>(
@@ -61,7 +70,10 @@ class _ScheduleSummaryView extends StatelessWidget {
           Navigator.of(context).popUntil((route) => route.isFirst);
           context.read<NavigationCubit>().setPage(2);
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('¡Cita confirmada con éxito!'), backgroundColor: Colors.green),
+            const SnackBar(
+              content: Text('¡Cita confirmada con éxito!'),
+              backgroundColor: Colors.green,
+            ),
           );
         }
       },
@@ -78,71 +90,112 @@ class _ScheduleSummaryView extends StatelessWidget {
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-                decoration: BoxDecoration(color: yellow, borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16))),
+                decoration: BoxDecoration(
+                  color: yellow,
+                  borderRadius:
+                      const BorderRadius.vertical(bottom: Radius.circular(16)),
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: const [
-                    Expanded(child: Text('Confirma tu cita', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold))),
+                    Expanded(
+                      child: Text(
+                        'Confirma tu cita',
+                        style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                      ),
+                    ),
                     SizedBox(width: 8),
                     Text('Paso 4 de 4'),
                   ],
                 ),
               ),
+
+              // Contenido
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(16),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      _buildSectionCard(
-                        title: 'Servicios',
+                  child: Card(
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    elevation: 1.5,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          ...state.selectedServices.map((service) => ListTile(
-                                title: Text(service.name),
-                                trailing: Text(currencyFormatter.format(service.price)),
-                                dense: true,
-                              )),
+                          const Text('Resumen de tu cita',
+                              style: TextStyle(
+                                  fontSize: 18, fontWeight: FontWeight.bold)),
+                          const SizedBox(height: 12),
+
+                          // Servicios + total
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Servicios:',
+                                  style: TextStyle(fontWeight: FontWeight.w600)),
+                              Text(
+                                currencyFormatter.format(state.totalPrice),
+                                style: const TextStyle(
+                                  color: Colors.orange,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 4),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: state.selectedServices.map((s) {
+                              return Padding(
+                                padding: const EdgeInsets.only(top: 4),
+                                child: Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(s.name,
+                                        style: const TextStyle(
+                                            color: Colors.black87)),
+                                    Text(
+                                      currencyFormatter.format(s.price),
+                                      style: const TextStyle(
+                                          color: Colors.black54),
+                                    ),
+                                  ],
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                          const SizedBox(height: 6),
                           const Divider(),
-                          ListTile(
-                            title: const Text('Duración Total', style: TextStyle(fontWeight: FontWeight.bold)),
-                            trailing: Text('${state.totalDuration} min', style: const TextStyle(fontWeight: FontWeight.bold)),
-                            dense: true,
+
+                          // Duración total
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              const Text('Duración total:',
+                                  style: TextStyle(fontWeight: FontWeight.w600)),
+                              Text('${state.totalDuration} min',
+                                  style: const TextStyle(
+                                      fontWeight: FontWeight.bold)),
+                            ],
                           ),
-                          ListTile(
-                            title: const Text('Precio Total', style: TextStyle(fontWeight: FontWeight.bold)),
-                            trailing: Text(
-                              currencyFormatter.format(state.totalPrice),
-                              style: TextStyle(fontWeight: FontWeight.bold, color: yellow, fontSize: 18),
-                            ),
-                            dense: true,
-                          ),
+                          const SizedBox(height: 12),
+
+                          // Resumen
+                          _summaryRow('Barbero:', state.barber.name),
+                          _summaryRow('Sede:', state.location.name),
+                          _summaryRow('', state.location.address),
+                          _summaryRow('', state.location.number),
+                          _summaryRow('Fecha y hora:', '$dateLong\n$timeStr'),
                         ],
                       ),
-                      const SizedBox(height: 16),
-                      _buildSectionCard(
-                        title: 'Sede, Barbero y Fecha',
-                        children: [
-                          ListTile(
-                            leading: const Icon(Icons.location_on_outlined),
-                            title: Text(state.location.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: Text(state.location.address),
-                          ),
-                          ListTile(
-                            leading: const Icon(Icons.person_outline),
-                            title: Text(state.barber.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: Text(state.barber.specialtys.join(', ')),
-                          ),
-                          ListTile(
-                            leading: const Icon(Icons.calendar_today_outlined),
-                            title: Text('$dateStr - $timeStr', style: const TextStyle(fontWeight: FontWeight.bold)),
-                            subtitle: const Text('Fecha y hora seleccionadas'),
-                          ),
-                        ],
-                      ),
-                    ],
+                    ),
                   ),
                 ),
               ),
+
               // Confirmar
               if (state is! SummaryConfirmationLoading)
                 Padding(
@@ -160,7 +213,11 @@ class _ScheduleSummaryView extends StatelessWidget {
                       );
                       context.read<SummaryBloc>().add(ConfirmAppointmentEvent(newAppointment));
                     },
-                    style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50), backgroundColor: yellow, foregroundColor: Colors.black),
+                    style: ElevatedButton.styleFrom(
+                      minimumSize: const Size(double.infinity, 50),
+                      backgroundColor: yellow,
+                      foregroundColor: Colors.black,
+                    ),
                     child: const Text('Confirmar Cita'),
                   ),
                 )
@@ -177,16 +234,26 @@ class _ScheduleSummaryView extends StatelessWidget {
     );
   }
 
-  Widget _buildSectionCard({required String title, required List<Widget> children}) {
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-          const SizedBox(height: 8),
-          ...children,
-        ]),
+  Widget _summaryRow(String label, String value) {
+    return Padding(
+      padding: const EdgeInsets.only(top: 6),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          SizedBox(
+            width: 120,
+            child: Text(
+              label,
+              style: const TextStyle(fontWeight: FontWeight.w600),
+            ),
+          ),
+          Expanded(
+            child: Text(
+              value,
+              style: const TextStyle(color: Colors.black87),
+            ),
+          ),
+        ],
       ),
     );
   }
