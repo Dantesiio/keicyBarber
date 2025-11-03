@@ -11,3 +11,13 @@ class SelectBarber extends BarberEvent {
   final String barberId;
   SelectBarber(this.barberId);
 }
+
+class SelectBarberDate extends BarberEvent {
+  final DateTime date;
+  SelectBarberDate(this.date);
+}
+
+class SelectBarberTime extends BarberEvent {
+  final TimeOfDay time;
+  SelectBarberTime(this.time);
+}

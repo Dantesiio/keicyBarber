@@ -13,12 +13,14 @@ class ScheduleSummaryScreen extends StatelessWidget {
   final Set<String> selectedServiceIds;
   final String selectedLocationId;
   final String selectedBarberId;
+  final DateTime selectedDateTime;
 
   const ScheduleSummaryScreen({
     super.key,
     required this.selectedServiceIds,
     required this.selectedLocationId,
     required this.selectedBarberId,
+    required this.selectedDateTime,
   });
 
   @override
@@ -36,25 +38,27 @@ class ScheduleSummaryScreen extends StatelessWidget {
         )),
       child: Scaffold(
         appBar: AppBar(backgroundColor: const Color(0xFFF2B705), elevation: 0, iconTheme: const IconThemeData(color: Colors.black)),
-        body: const _ScheduleSummaryView(),
+        body: _ScheduleSummaryView(selectedDateTime: selectedDateTime), // <-- pásalo
       ),
     );
   }
 }
 
 class _ScheduleSummaryView extends StatelessWidget {
-  const _ScheduleSummaryView();
+  const _ScheduleSummaryView({required this.selectedDateTime});
+  final DateTime selectedDateTime;
 
   @override
   Widget build(BuildContext context) {
     final yellow = const Color(0xFFF2B705);
     final currencyFormatter = NumberFormat.currency(locale: 'es_CO', symbol: r'$', decimalDigits: 0);
+    final dateStr = DateFormat('EEE d MMM', 'es_CO').format(selectedDateTime);
+    final timeStr = DateFormat('h:mm a', 'es_CO').format(selectedDateTime);
 
     return BlocConsumer<SummaryBloc, SummaryState>(
       listener: (context, state) {
         if (state is SummaryConfirmationSuccess) {
           Navigator.of(context).popUntil((route) => route.isFirst);
-          // "Mis Citas" (índice 2)
           context.read<NavigationCubit>().setPage(2);
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('¡Cita confirmada con éxito!'), backgroundColor: Colors.green),
@@ -71,7 +75,6 @@ class _ScheduleSummaryView extends StatelessWidget {
         if (state is SummaryLoaded) {
           return Column(
             children: [
-              // --- Header ---
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
@@ -91,7 +94,6 @@ class _ScheduleSummaryView extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      // Resumen de Servicios
                       _buildSectionCard(
                         title: 'Servicios',
                         children: [
@@ -108,15 +110,17 @@ class _ScheduleSummaryView extends StatelessWidget {
                           ),
                           ListTile(
                             title: const Text('Precio Total', style: TextStyle(fontWeight: FontWeight.bold)),
-                            trailing: Text(currencyFormatter.format(state.totalPrice), style: TextStyle(fontWeight: FontWeight.bold, color: yellow, fontSize: 18)),
+                            trailing: Text(
+                              currencyFormatter.format(state.totalPrice),
+                              style: TextStyle(fontWeight: FontWeight.bold, color: yellow, fontSize: 18),
+                            ),
                             dense: true,
                           ),
                         ],
                       ),
                       const SizedBox(height: 16),
-                      // Resumen de Sede y Barbero
                       _buildSectionCard(
-                        title: 'Sede y Barbero',
+                        title: 'Sede, Barbero y Fecha',
                         children: [
                           ListTile(
                             leading: const Icon(Icons.location_on_outlined),
@@ -128,24 +132,27 @@ class _ScheduleSummaryView extends StatelessWidget {
                             title: Text(state.barber.name, style: const TextStyle(fontWeight: FontWeight.bold)),
                             subtitle: Text(state.barber.specialtys.join(', ')),
                           ),
+                          ListTile(
+                            leading: const Icon(Icons.calendar_today_outlined),
+                            title: Text('$dateStr - $timeStr', style: const TextStyle(fontWeight: FontWeight.bold)),
+                            subtitle: const Text('Fecha y hora seleccionadas'),
+                          ),
                         ],
                       ),
-                      // TODO: Aquí iría el selector de Fecha y Hora
                     ],
                   ),
                 ),
               ),
-              // --- Botón para confirmar ---
+              // Confirmar
               if (state is! SummaryConfirmationLoading)
                 Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: ElevatedButton(
                     onPressed: () {
-                      // Creamos el objeto Appointment para enviarlo
                       final newAppointment = Appointment(
-                        id: DateTime.now().millisecondsSinceEpoch.toString(), // ID temporal
+                        id: DateTime.now().millisecondsSinceEpoch.toString(),
                         serviceName: state.selectedServices.map((s) => s.name).join(', '),
-                        dateTime: DateTime.now(), // TODO: Usar la fecha y hora seleccionada
+                        dateTime: selectedDateTime,
                         barberName: state.barber.name,
                         location: state.location.name,
                         price: state.totalPrice,
@@ -175,14 +182,11 @@ class _ScheduleSummaryView extends StatelessWidget {
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
       child: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
-            const SizedBox(height: 8),
-            ...children,
-          ],
-        ),
+        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
+          Text(title, style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600)),
+          const SizedBox(height: 8),
+          ...children,
+        ]),
       ),
     );
   }
