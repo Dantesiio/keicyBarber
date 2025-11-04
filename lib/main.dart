@@ -16,7 +16,18 @@ import 'presentation/bloc/home/home_event.dart';
 import 'presentation/bloc/navigation/navigation_cubit.dart';
 
 import 'domain/usecases/get_services.dart';
+import 'domain/usecases/login_user.dart';
 import 'data/repositories/service_repository_impl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'data/datasources/auth_data_source.dart';
+import 'data/datasources/profile_data_source.dart';
+import 'data/repositories/auth_repository_impl.dart';
+import 'domain/usecases/register_user.dart';
+import 'presentation/bloc/auth/auth_bloc.dart';
+import 'data/repositories/profile_repository_impl.dart';
+import 'domain/usecases/get_profile.dart';
+import 'presentation/bloc/profile/profile_bloc.dart';
+import 'presentation/bloc/profile/profile_event.dart';
 
 String _toIntlTag(Locale l) =>
     l.countryCode == null || l.countryCode!.isEmpty
@@ -25,6 +36,12 @@ String _toIntlTag(Locale l) =>
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Inicializar Supabase
+  await Supabase.initialize(
+    url: 'https://sjczmvfxzaajruyxgrhy.supabase.co',
+    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqY3ptdmZ4emFhanJ1eXhncmh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNzE1MzQsImV4cCI6MjA3NDc0NzUzNH0.gjRo2Jd2ielDgZJ60B2m0AzzOlJpi0MAsc_7AtVtARs',
+  );
 
   final deviceLocale = WidgetsBinding.instance.platformDispatcher.locale;
   final initialTag = _toIntlTag(deviceLocale);
@@ -47,18 +64,37 @@ class _MyAppState extends State<MyApp> {
     WidgetsBinding.instance.platformDispatcher.onLocaleChanged = () async {
       final sysLocale = WidgetsBinding.instance.platformDispatcher.locale;
       final tag = _toIntlTag(sysLocale);
-      initializeDateFormatting(tag).then((_) {
-        Intl.defaultLocale = tag;
-        if (mounted) setState(() {});
-      });
+      await initializeDateFormatting(tag);
+      Intl.defaultLocale = tag;
+      if (mounted) setState(() {});
     };
   }
 
   @override
   Widget build(BuildContext context) {
     final primaryYellow = const Color(0xFFF2B705);
+
     final serviceRepository = ServiceRepositoryImpl();
     final getServicesUseCase = GetServices(serviceRepository);
+
+    final supabaseClient = Supabase.instance.client;
+    final authDataSource = AuthDataSourceImpl(supabaseClient);
+    final profileDataSource = ProfileDataSourceImpl(supabaseClient);
+
+    final authRepository = AuthRepositoryImpl(
+      authDataSource: authDataSource,
+      profileDataSource: profileDataSource,
+    );
+
+    final registerUserUseCase = RegisterUser(authRepository);
+    final loginUserUseCase = LoginUser(authRepository);
+
+    final profileRepository = ProfileRepositoryImpl(
+      profileDataSource: profileDataSource,
+      client: supabaseClient,
+    );
+    
+    final getProfileUseCase = GetProfile(profileRepository);
 
     return MultiBlocProvider(
       providers: [
@@ -67,6 +103,17 @@ class _MyAppState extends State<MyApp> {
               HomeBloc(getServices: getServicesUseCase)..add(LoadHome()),
         ),
         BlocProvider<NavigationCubit>(create: (context) => NavigationCubit()),
+        BlocProvider<AuthBloc>(
+          create: (context) => AuthBloc(
+            registerUserUseCase: registerUserUseCase,
+            loginUserUseCase: loginUserUseCase,
+          ),
+        ),
+        BlocProvider<ProfileBloc>(
+          create: (context) =>
+              ProfileBloc(getProfileUseCase: getProfileUseCase)
+                ..add(LoadUserProfile()),
+        ),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
