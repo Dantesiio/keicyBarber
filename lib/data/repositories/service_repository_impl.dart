@@ -1,25 +1,56 @@
-import '../../domain/entities/service.dart';
-import '../../domain/repositories/service_repository.dart';
+import 'package:keicybarber/domain/entities/service.dart';
+import 'package:keicybarber/domain/repositories/service_repository.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class ServiceRepositoryImpl implements ServiceRepository {
-  // Aquí se conectará con Supabase en el futuro
-  
+  final SupabaseClient _supabaseClient = Supabase.instance.client;
+
   @override
   Future<List<Service>> getServices() async {
-    // Mock data por ahora
-    await Future.delayed(const Duration(seconds: 1));
-    return [
-      Service(id: '1', name: 'Corte de cabello', description: 'Incluye asesoría', durationMinutes: 60, price: 30000),
-      Service(id: '2', name: 'Barba', description: 'Arreglo de barba', durationMinutes: 30, price: 25000),
-      Service(id: '3', name: 'Tinte', description: 'Tinte de cabello', durationMinutes: 90, price: 45000),
-      Service(id: '4', name: 'Masaje', description: 'Masaje relajante', durationMinutes: 30, price: 20000),
-      Service(id: '5', name: 'Peinado especial', description: 'Peinado para eventos', durationMinutes: 120, price: 60000),
-    ];
+    try {
+      // Hacemos la consulta a la tabla 'services'
+      final response = await _supabaseClient.from('services').select().eq('status', 'activo');
+      // Creamos una nueva lista con el tipo correcto para satisfacer al compilador web.
+      final List<Map<String, dynamic>> data = List<Map<String, dynamic>>.from(response);
+
+      // Mapeamos la respuesta (una lista de mapas) a una lista de objetos Service
+      final services = data.map((item) {
+        return Service(
+          id: item['id'].toString(),
+          name: item['name'],
+          description: item['description'],
+          durationMinutes: item['duration_minutes'],
+          price: (item['price_cents'] as int) / 100.0,
+        );
+      }).toList();
+
+      return services;
+    } catch (e) {
+      // Manejo de errores básico
+      print('Error al obtener servicios: $e');
+      throw Exception('No se pudieron cargar los servicios');
+    }
   }
 
   @override
   Future<Service> getServiceById(String id) async {
-    final services = await getServices();
-    return services.firstWhere((s) => s.id == id);
+    try {
+      final data = await _supabaseClient
+          .from('services')
+          .select()
+          .eq('id', id)
+          .single();
+
+      return Service(
+        id: data['id'].toString(),
+        name: data['name'],
+        description: data['description'],
+        durationMinutes: data['duration_minutes'],
+        price: (data['price_cents'] as int) / 100.0,
+      );
+    } catch (e) {
+      print('Error al obtener servicio por ID: $e');
+      throw Exception('No se pudo cargar el servicio');
+    }
   }
 }
