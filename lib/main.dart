@@ -4,8 +4,10 @@ import 'package:keicybarber/presentation/screens/schedule_location_screen.dart';
 import 'presentation/bloc/home/home_bloc.dart';
 import 'presentation/bloc/home/home_event.dart';
 import 'presentation/bloc/navigation/navigation_cubit.dart';
+import 'presentation/bloc/navigation/navigation_state.dart';
 import 'presentation/screens/welcome_screen.dart';
 import 'presentation/screens/home_screen.dart';
+import 'presentation/screens/services_catalog_screen.dart';
 import 'presentation/screens/login_screen.dart';
 import 'presentation/screens/register_screen.dart';
 import 'presentation/screens/schedule_screen.dart';
@@ -69,18 +71,18 @@ class RootScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return BlocBuilder<NavigationCubit, int>(
-      builder: (context, index) {
-        return Scaffold(
-          body: SafeArea(child: _pages[index]),
+    return BlocBuilder<NavigationCubit, NavigationState>(
+      builder: (context, state) {
+        return Scaffold( // El Scaffold ahora es más simple
+          body: SafeArea(child: _pages[state.index]),
           bottomNavigationBar: Container(
-            decoration: const BoxDecoration(
-              color: Colors.white,
-              boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 6)],
-            ),
-            child: BottomNavigationBar(
-              currentIndex: index,
-              onTap: (i) => context.read<NavigationCubit>().setPage(i),
+                  decoration: const BoxDecoration(
+                    color: Colors.white,
+                    boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 6)],
+                  ),
+                  child: BottomNavigationBar(
+                    currentIndex: state.index,
+                    onTap: (i) => context.read<NavigationCubit>().setPage(i),
               type: BottomNavigationBarType.fixed,
               selectedItemColor: Theme.of(context).colorScheme.primary,
               unselectedItemColor: Colors.black54,

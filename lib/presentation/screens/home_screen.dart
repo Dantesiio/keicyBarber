@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:keicybarber/presentation/bloc/navigation/navigation_cubit.dart';
 import '../bloc/home/home_bloc.dart';
 import '../bloc/home/home_state.dart';
+import '../bloc/navigation/navigation_cubit.dart';
+import 'services_catalog_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -144,7 +146,11 @@ class HomeScreen extends StatelessWidget {
                     children: [
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            Navigator.of(context).push(MaterialPageRoute(
+                              builder: (_) => const ServicesCatalogScreen(),
+                            ));
+                          },
                           child: const Text('Ver Servicios'),
                         ),
                       ),
