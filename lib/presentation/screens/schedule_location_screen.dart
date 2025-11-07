@@ -103,7 +103,6 @@ class _ScheduleLocationView extends StatelessWidget {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(location.address),
-                              Text(location.number),
                             ],
                           ),
                           trailing: isSelected

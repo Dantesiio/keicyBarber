@@ -1,15 +1,23 @@
-import 'package:keicybarber/domain/entities/location.dart';
-import 'package:keicybarber/domain/repositories/location_repository.dart';
+import '../../domain/entities/location.dart';
+import '../../domain/repositories/location_repository.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class LocationRepositoryImpl implements LocationRepository {
-  // Aquí se conectará con Supabase en el futuro
+  final _sb = Supabase.instance.client;
 
   @override
   Future<List<Location>> getLocations() async {
-    await Future.delayed(const Duration(seconds: 1));
-    return [
-      Location(id: '1', name: 'Sede Bogotá', address: 'Calle Falsa 123', number: '(57) 123-4567'),
-      Location(id: '2', name: 'Sede Medellín', address: 'Avenida Siempre Viva 742', number: '(57) 987-6543'),
-    ];
+    final rows = await _sb
+        .from('locations')
+        .select('id, name, address')
+        .order('id');
+
+    return (rows as List).map((r) {
+      return Location(
+        id: r['id'].toString(),
+        name: r['name'] as String,
+        address: (r['address'] as String?) ?? ''
+      );
+    }).toList();
   }
 }

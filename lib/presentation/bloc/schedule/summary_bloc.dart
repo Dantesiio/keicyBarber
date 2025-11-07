@@ -31,9 +31,9 @@ class SummaryBloc extends Bloc<SummaryEvent, SummaryState> {
     emit(SummaryLoading());
     try {
       // Obtener todos los datos en paralelo
-      final futureServices = serviceRepository.getServices(); // Podríamos optimizar para pedir solo los IDs
+      final futureServices = serviceRepository.getServices();
       final futureLocations = locationRepository.getLocations();
-      final futureBarbers = barberRepository.getBarbers();
+      final futureBarbers = barberRepository.getBarbersByLocation(event.locationId);
 
       final results = await Future.wait([futureServices, futureLocations, futureBarbers]);
 
@@ -55,9 +55,45 @@ class SummaryBloc extends Bloc<SummaryEvent, SummaryState> {
     }
   }
 
-  Future<void> _onConfirmAppointment(ConfirmAppointmentEvent event, Emitter<SummaryState> emit) async {
-    emit(SummaryConfirmationLoading());
-    await appointmentRepository.createAppointment(event.appointment);
-    emit(SummaryConfirmationSuccess());
+  Future<void> _onConfirmAppointment(
+    ConfirmAppointmentEvent event,
+    Emitter<SummaryState> emit,
+  ) async {
+    try {
+      final current = state;
+      if (current is! SummaryLoaded) {
+        emit(SummaryError('No hay datos cargados para confirmar la cita.'));
+        return;
+      }
+
+      emit(SummaryConfirmationLoading());
+
+      final selectedServices = current.selectedServices;
+
+      final totalDurationMinutes =
+          selectedServices.fold<int>(0, (sum, s) => sum + s.durationMinutes);
+
+      final estimatedPriceCents =
+          selectedServices.fold<int>(0, (sum, s) => sum + s.price.toInt());
+
+      final serviceIds = selectedServices
+          .map((s) => int.tryParse(s.id))
+          .where((v) => v != null)
+          .cast<int>()
+          .toList();
+
+      await appointmentRepository.createAppointment(
+        appointment: event.appointment,
+        serviceIds: serviceIds,
+        barberId: current.barber.id,
+        locationId: int.parse(current.location.id),
+        totalDurationMinutes: totalDurationMinutes,
+        estimatedPriceCents: estimatedPriceCents,
+      );
+
+      emit(SummaryConfirmationSuccess());
+    } catch (e) {
+      emit(SummaryError('No se pudo confirmar la cita: $e'));
+    }
   }
 }

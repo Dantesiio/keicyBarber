@@ -187,7 +187,6 @@ class _ScheduleSummaryView extends StatelessWidget {
                           _summaryRow('Barbero:', state.barber.name),
                           _summaryRow('Sede:', state.location.name),
                           _summaryRow('', state.location.address),
-                          _summaryRow('', state.location.number),
                           _summaryRow('Fecha y hora:', '$dateLong\n$timeStr'),
                         ],
                       ),
