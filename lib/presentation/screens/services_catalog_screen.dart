@@ -12,12 +12,9 @@ class ServicesCatalogScreen extends StatelessWidget {
     final yellow = const Color(0xFFF2B705);
     final currencyFormatter = NumberFormat.currency(locale: 'es_CO', symbol: r'$', decimalDigits: 0);
 
-    return Scaffold(
-      appBar: AppBar(
-        backgroundColor: yellow,
-        elevation: 0,
-      ),
-      body: FutureBuilder<List<Service>>(
+    // Ya no necesitamos un Scaffold, solo el contenido.
+    // El AppBar y el fondo los provee la pantalla padre.
+    return FutureBuilder<List<Service>>(
         future: repository.getServices(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
@@ -34,13 +31,18 @@ class ServicesCatalogScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Container(
-                width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(20, 0, 20, 24),
-                decoration: BoxDecoration(
-                  color: yellow,
-                  borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+                color: Colors.white, // Fondo para el header
+                child: Row(
+                  children: [
+                    IconButton(
+                      icon: const Icon(Icons.arrow_back),
+                      onPressed: () => Navigator.of(context).pop(),
+                    ),
+                    const Expanded(
+                      child: Text('Nuestros Servicios', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold)),
+                    ),
+                  ],
                 ),
-                child: const Text('Nuestros Servicios', style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold)),
               ),
               const SizedBox(height: 16),
               Expanded(
@@ -87,7 +89,6 @@ class ServicesCatalogScreen extends StatelessWidget {
             ],
           );
         },
-      ),
-    );
+      );
   }
 }

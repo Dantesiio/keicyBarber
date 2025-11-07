@@ -8,8 +8,13 @@ class ServiceRepositoryImpl implements ServiceRepository {
   @override
   Future<List<Service>> getServices() async {
     try {
-      // Hacemos la consulta a la tabla 'services'
-      final response = await _supabaseClient.from('services').select().eq('status', 'activo');
+      // Hacemos la consulta a la tabla 'services' y la unimos con 'barber_services'.
+      // 'barber_services!inner(*)' asegura que solo se traigan servicios que
+      // tengan al menos una entrada en la tabla de relación.
+      final response = await _supabaseClient
+          .from('services')
+          .select('*, barber_services!inner(*)')
+          .eq('status', 'activo');
       // Creamos una nueva lista con el tipo correcto para satisfacer al compilador web.
       final List<Map<String, dynamic>> data = List<Map<String, dynamic>>.from(response);
 
