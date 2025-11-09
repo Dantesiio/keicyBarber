@@ -2,9 +2,31 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../bloc/home/home_bloc.dart';
 import '../bloc/home/home_state.dart';
+import '../bloc/navigation/navigation_cubit.dart';
+import 'services_catalog_screen.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    // El Navigator anidado gestionará la pila de navegación para esta pestaña.
+    return Navigator(
+      onGenerateRoute: (settings) {
+        return MaterialPageRoute(
+          settings: settings,
+          builder: (context) {
+            // La ruta inicial de este navegador es el contenido principal de Home.
+            return const _HomeView();
+          },
+        );
+      },
+    );
+  }
+}
+
+class _HomeView extends StatelessWidget {
+  const _HomeView();
 
   @override
   Widget build(BuildContext context) {
@@ -23,32 +45,7 @@ class HomeScreen extends StatelessWidget {
         return Scaffold(
           body: Column(
             children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
-                decoration: BoxDecoration(
-                  color: yellow,
-                  borderRadius: const BorderRadius.vertical(
-                    bottom: Radius.circular(16),
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
-                    Expanded(
-                      child: Text(
-                        '¡Hola, Juan!',
-                        style: TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                    SizedBox(width: 8),
-                    Text('250\nPuntos', textAlign: TextAlign.right),
-                  ],
-                ),
-              ),
+              _buildHeader(),
               Expanded(child: body),
             ],
           ),
@@ -57,9 +54,33 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildHeader() {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
+      decoration: const BoxDecoration(
+        color: Color(0xFFF2B705),
+        borderRadius: BorderRadius.vertical(bottom: Radius.circular(16)),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: const [
+          Expanded(
+            child: Text(
+              '¡Hola, Juan!',
+              style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+            ),
+          ),
+          SizedBox(width: 8),
+          Text('250\nPuntos', textAlign: TextAlign.right),
+        ],
+      ),
+    );
+  }
+
   Widget _buildHomeContent(BuildContext context, List<String> services) {
     final yellow = const Color(0xFFF2B705);
-    return Padding(
+    return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -121,7 +142,9 @@ class HomeScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
                   ElevatedButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      context.read<NavigationCubit>().setPage(1);
+                    },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: yellow,
                       foregroundColor: Colors.black,
@@ -141,7 +164,12 @@ class HomeScreen extends StatelessWidget {
                     children: [
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            // Usamos el Navigator anidado para empujar la nueva pantalla.
+                            Navigator.push(context, MaterialPageRoute(
+                              builder: (_) => const ServicesCatalogScreen(),
+                            ));
+                          },
                           child: const Text('Ver Servicios'),
                         ),
                       ),
@@ -164,27 +192,26 @@ class HomeScreen extends StatelessWidget {
             style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
           ),
           const SizedBox(height: 8),
-          Expanded(
-            child: ListView.builder(
-              itemCount: services.length,
-              itemBuilder: (context, index) {
-                return Card(
-                  margin: const EdgeInsets.symmetric(vertical: 8),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
+          // Usamos ListView.shrinkWrap y physics para que funcione dentro de un SingleChildScrollView
+          ListView.builder(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: services.length,
+            itemBuilder: (context, index) {
+              return Card(
+                margin: const EdgeInsets.symmetric(vertical: 8),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                child: ListTile(
+                  title: Text(
+                    services[index],
+                    style: const TextStyle(fontWeight: FontWeight.w600),
                   ),
-                  child: ListTile(
-                    title: Text(
-                      services[index],
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                    subtitle: const Text('Incluye: Corte y masaje'),
-                    trailing: const Icon(Icons.add),
-                    onTap: () {},
-                  ),
-                );
-              },
-            ),
+                  subtitle: const Text('Incluye: Corte y masaje'),
+                  trailing: const Icon(Icons.add),
+                  onTap: () {},
+                ),
+              );
+            },
           ),
         ],
       ),
