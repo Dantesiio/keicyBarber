@@ -1,10 +1,11 @@
 import 'package:keicybarber/domain/entities/barber.dart';
-import 'package:keicybarber/domain/usecases/barber_repository.dart';
+import 'package:keicybarber/domain/repositories/barber_repository.dart';
 
-class GetBarbers {
+class GetBarbersByLocation {
   final BarberRepository repository;
+  GetBarbersByLocation(this.repository);
 
-  GetBarbers(this.repository);
-
-  Future<List<Barber>> call() async => repository.getBarbers();
+  Future<List<Barber>> call(String locationId) {
+    return repository.getBarbersByLocation(locationId);
+  }
 }
