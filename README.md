@@ -4,7 +4,7 @@ Aplicación móvil para la gestión de citas en la Peluquería Keicy.
 
 ## 🎥 Video Demostración
 
-Para ver una demostración completa de todas las funcionalidades de la aplicación, consulta el archivo **`Sprint 2.mp4`** incluido en el repositorio.
+Para ver una demostración completa de todas las funcionalidades de la aplicación, consulta el video: [**Sprint 2.mp4**](/videos/Sprint%202.mp4)
 
 ---
 
