@@ -19,7 +19,6 @@ import 'presentation/bloc/navigation/navigation_cubit.dart';
 import 'domain/usecases/get_services.dart';
 import 'domain/usecases/login_user.dart';
 import 'data/repositories/service_repository_impl.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'data/datasources/auth_data_source.dart';
 import 'data/datasources/profile_data_source.dart';
 import 'data/repositories/auth_repository_impl.dart';
