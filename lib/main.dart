@@ -37,6 +37,42 @@ String _toIntlTag(Locale l) => l.countryCode == null || l.countryCode!.isEmpty
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
+  String? supabaseUrl;
+  String? supabaseAnonKey;
+
+  // --- INICIO DEL BLOQUE DE DIAGNÓSTICO ---
+  try {
+    await dotenv.load(fileName: ".env");
+
+    print("¡ÉXITO! El archivo .env fue encontrado y cargado por el paquete.");
+
+    supabaseUrl = dotenv.env['SUPABASE_URL'];
+    supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'];
+
+    if (supabaseUrl == null || supabaseAnonKey == null) {
+      print(
+        "ERROR CRÍTICO: El archivo se leyó, pero una o ambas claves son NULAS.",
+      );
+      print(
+        "Por favor, revisa que los nombres en tu .env sean EXACTAMENTE 'SUPABASE_URL' y 'SUPABASE_ANON_KEY'.",
+      );
+      print("==============================================");
+      return;
+    }
+  } catch (e) {
+    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+    print("¡FALLÓ LA CARGA DEL ARCHIVO .ENV!");
+    print("Se produjo una excepción: $e");
+    print(
+      "Esto casi siempre significa que el archivo .env no fue incluido en el 'build' de la app.",
+    );
+    print(
+      "Asegúrate de que está en la raíz del proyecto y en pubspec.yaml -> assets.",
+    );
+    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+    return;
+  }
+
   // Inicializar Supabase
   await Supabase.initialize(
     url: dotenv.env['SUPABASE_URL']!,
