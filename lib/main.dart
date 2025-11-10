@@ -28,19 +28,19 @@ import 'data/repositories/profile_repository_impl.dart';
 import 'domain/usecases/get_profile.dart';
 import 'presentation/bloc/profile/profile_bloc.dart';
 import 'presentation/bloc/profile/profile_event.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-String _toIntlTag(Locale l) =>
-    l.countryCode == null || l.countryCode!.isEmpty
-        ? l.languageCode
-        : '${l.languageCode}_${l.countryCode}';
+String _toIntlTag(Locale l) => l.countryCode == null || l.countryCode!.isEmpty
+    ? l.languageCode
+    : '${l.languageCode}_${l.countryCode}';
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
   // Inicializar Supabase
   await Supabase.initialize(
-    url: 'https://sjczmvfxzaajruyxgrhy.supabase.co',
-    anonKey: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqY3ptdmZ4emFhanJ1eXhncmh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNzE1MzQsImV4cCI6MjA3NDc0NzUzNH0.gjRo2Jd2ielDgZJ60B2m0AzzOlJpi0MAsc_7AtVtARs',
+    url: dotenv.env['SUPABASE_URL']!,
+    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
   );
 
   final deviceLocale = WidgetsBinding.instance.platformDispatcher.locale;
@@ -93,7 +93,7 @@ class _MyAppState extends State<MyApp> {
       profileDataSource: profileDataSource,
       client: supabaseClient,
     );
-    
+
     final getProfileUseCase = GetProfile(profileRepository);
 
     return MultiBlocProvider(
@@ -136,7 +136,8 @@ class _MyAppState extends State<MyApp> {
           Locale('en'),
         ],
         localeResolutionCallback: (locale, supported) {
-          final chosen = locale ??
+          final chosen =
+              locale ??
               WidgetsBinding.instance.platformDispatcher.locale ??
               supported.first;
           final tag = _toIntlTag(chosen);
