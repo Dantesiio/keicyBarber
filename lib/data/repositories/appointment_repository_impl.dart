@@ -1,6 +1,5 @@
 import '../../domain/entities/appointment.dart';
 import '../../domain/repositories/appointment_repository.dart';
-import '../source/appointment_data_source.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
 
@@ -9,7 +8,18 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
 
   @override
   Future<List<Appointment>> getAppointments() async {
-    return await _dataSource.getAllAppointments();
+    await Future.delayed(const Duration(seconds: 1));
+    return [
+      Appointment(
+        id: '1',
+        serviceName: 'Corte Y Barba',
+        dateTime: DateTime(2024, 1, 15, 10, 0),
+        barberName: 'Carlos Rodríguez',
+        location: 'Sede Bogotá',
+        price: 45000,
+        status: 'Confirmada',
+      ),
+    ];
   }
 
   @override
@@ -57,7 +67,8 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
 
   @override
   Future<void> cancelAppointment(String id) async {
-    await _dataSource.cancelAppointment(id);
+    await Future.delayed(const Duration(seconds: 1));
+    // Mock: simula cancelación exitosa
   }
 
   @override
