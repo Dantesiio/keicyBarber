@@ -1,6 +1,7 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:keicybarber/domain/entities/barber.dart';
 import 'package:keicybarber/domain/repositories/barber_repository.dart';
+import 'package:keicybarber/domain/repositories/appointment_repository.dart';
 import 'package:flutter/material.dart';
 
 part 'barber_event.dart';
@@ -8,8 +9,9 @@ part 'barber_state.dart';
 
 class BarberBloc extends Bloc<BarberEvent, BarberState> {
   final BarberRepository barberRepository;
+  final AppointmentRepository appointmentRepository;
 
-  BarberBloc({required this.barberRepository}) : super(BarberInitial()) {
+  BarberBloc({required this.barberRepository, required this.appointmentRepository}) : super(BarberInitial()) {
     on<LoadBarbersByLocation>(_onLoadBarbersByLocation);
     on<SelectBarber>(_onSelectBarber);
     on<SelectBarberDate>(_onSelectBarberDate);
@@ -32,12 +34,37 @@ class BarberBloc extends Bloc<BarberEvent, BarberState> {
     }
   }
 
-  void _onSelectBarberDate(SelectBarberDate event, Emitter<BarberState> emit) {
-    if (state is BarberLoaded) {
-      emit((state as BarberLoaded).copyWith(
+  void _onSelectBarberDate(SelectBarberDate event, Emitter<BarberState> emit) async {
+    if (state is! BarberLoaded) return;
+    final curr = state as BarberLoaded;
+    if (curr.selectedBarberId == null) {
+      emit(curr.copyWith(
         selectedDate: DateTime(event.date.year, event.date.month, event.date.day),
         clearTime: true,
+        clearSlots: true,
       ));
+      return;
+    }
+
+    emit(curr.copyWith(
+      selectedDate: DateTime(event.date.year, event.date.month, event.date.day),
+      clearTime: true,
+      clearSlots: true,
+    ));
+
+    try {
+      // Consultar slots disponibles dinámicamente
+      final slots = await appointmentRepository.getAvailableSlots(
+        barberId: curr.selectedBarberId!,
+        locationId: event.locationId,
+        day: event.date,
+        requiredMinutes: event.requiredMinutes,
+        slotMinutes: 30,
+      );
+
+      emit((state as BarberLoaded).copyWith(availableSlots: slots));
+    } catch (e) {
+      emit((state as BarberLoaded).copyWith(availableSlots: const []));
     }
   }
 

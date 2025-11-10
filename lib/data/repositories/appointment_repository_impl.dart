@@ -1,6 +1,7 @@
 import '../../domain/entities/appointment.dart';
 import '../../domain/repositories/appointment_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter/material.dart';
 
 class AppointmentRepositoryImpl implements AppointmentRepository {
   final SupabaseClient _sb = Supabase.instance.client;
@@ -68,6 +69,73 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   Future<void> cancelAppointment(String id) async {
     await Future.delayed(const Duration(seconds: 1));
     // Mock: simula cancelación exitosa
+  }
+
+  @override
+  Future<List<TimeOfDay>> getAvailableSlots({
+    required String barberId,
+    required int locationId,
+    required DateTime day,
+    required int requiredMinutes,
+    int slotMinutes = 30,
+  }) async {
+    final localDay = DateTime(day.year, day.month, day.day);
+
+    final startOfDayUtc = DateTime.utc(localDay.year, localDay.month, localDay.day);
+    final endOfDayUtc = startOfDayUtc.add(const Duration(days: 1));
+
+    final rows = await _sb
+        .from('appointments')
+        .select('start_time, end_time')
+        .eq('barber_id', barberId)
+        .eq('location_id', locationId)
+        .gte('start_time', startOfDayUtc.toIso8601String())
+        .lt('start_time', endOfDayUtc.toIso8601String());
+
+    final busy = <({DateTime start, DateTime end})>[];
+    for (final r in (rows as List)) {
+      final s = DateTime.parse(r['start_time'] as String).toLocal();
+      final e = DateTime.parse(r['end_time'] as String).toLocal();
+      busy.add((start: s, end: e));
+    }
+
+    List<DateTime> _generateWindow(DateTime base, int hStart, int hEnd) {
+      final start = DateTime(base.year, base.month, base.day, hStart);
+      final end = DateTime(base.year, base.month, base.day, hEnd);
+      final lastStart = end.subtract(Duration(minutes: requiredMinutes));
+      final step = Duration(minutes: slotMinutes);
+
+      final out = <DateTime>[];
+      for (DateTime t = start; !t.isAfter(lastStart); t = t.add(step)) {
+        out.add(t);
+      }
+      return out;
+    }
+
+    final candidates = <DateTime>[
+      ..._generateWindow(localDay, 9, 13),
+      ..._generateWindow(localDay, 14, 19),
+    ];
+
+    bool _overlaps(DateTime aStart, DateTime aEnd, DateTime bStart, DateTime bEnd) {
+      return aStart.isBefore(bEnd) && bStart.isBefore(aEnd);
+    }
+
+    final now = DateTime.now();
+    final isToday = now.year == localDay.year && now.month == localDay.month && now.day == localDay.day;
+
+    final available = <TimeOfDay>[];
+    for (final start in candidates) {
+      if (isToday && !start.isAfter(now)) continue;
+
+      final end = start.add(Duration(minutes: requiredMinutes));
+      final overlaps = busy.any((b) => _overlaps(start, end, b.start, b.end));
+      if (!overlaps) {
+        available.add(TimeOfDay(hour: start.hour, minute: start.minute));
+      }
+    }
+
+    return available;
   }
 
   String _genBookingNumber() {

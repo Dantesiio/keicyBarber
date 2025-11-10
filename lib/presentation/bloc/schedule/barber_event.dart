@@ -14,7 +14,9 @@ class SelectBarber extends BarberEvent {
 
 class SelectBarberDate extends BarberEvent {
   final DateTime date;
-  SelectBarberDate(this.date);
+  final int requiredMinutes;
+  final int locationId;
+  SelectBarberDate(this.date, {required this.requiredMinutes, required this.locationId});
 }
 
 class SelectBarberTime extends BarberEvent {

@@ -13,10 +13,27 @@ class BarberLoaded extends BarberState {
   final DateTime? selectedDate;
   final TimeOfDay? selectedTime;
 
-  BarberLoaded(this.barbers, {this.selectedBarberId, this.selectedDate, this.selectedTime});
+  final List<TimeOfDay> availableSlots;
 
-  BarberLoaded copyWith({List<Barber>? barbers, String? selectedBarberId, DateTime? selectedDate, TimeOfDay? selectedTime, bool clearDate = false, bool clearTime = false}) {
-    return BarberLoaded(barbers ?? this.barbers, selectedBarberId: selectedBarberId ?? this.selectedBarberId, selectedDate: clearDate ? null : (selectedDate ?? this.selectedDate),selectedTime: clearTime ? null : (selectedTime ?? this.selectedTime));
+  BarberLoaded(this.barbers, {this.selectedBarberId,this.selectedDate,this.selectedTime,this.availableSlots = const [],});
+
+  BarberLoaded copyWith({
+    List<Barber>? barbers,
+    String? selectedBarberId,
+    DateTime? selectedDate,
+    TimeOfDay? selectedTime,
+    List<TimeOfDay>? availableSlots,
+    bool clearDate = false,
+    bool clearTime = false,
+    bool clearSlots = false,
+  }) {
+    return BarberLoaded(
+      barbers ?? this.barbers,
+      selectedBarberId: selectedBarberId ?? this.selectedBarberId,
+      selectedDate: clearDate ? null : (selectedDate ?? this.selectedDate),
+      selectedTime: clearTime ? null : (selectedTime ?? this.selectedTime),
+      availableSlots: clearSlots ? const [] : (availableSlots ?? this.availableSlots),
+    );
   }
 }
 

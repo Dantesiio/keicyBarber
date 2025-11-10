@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:keicybarber/data/repositories/barber_repository_impl.dart';
+import 'package:keicybarber/data/repositories/appointment_repository_impl.dart';
+import 'package:keicybarber/data/repositories/service_repository_impl.dart';
 import 'package:keicybarber/presentation/bloc/schedule/barber_bloc.dart';
 import 'package:keicybarber/presentation/screens/schedule_summary_screen.dart';
 
@@ -18,8 +20,10 @@ class ScheduleBarberScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => BarberBloc(barberRepository: BarberRepositoryImpl())
-        ..add(LoadBarbersByLocation(selectedLocationId)),
+      create: (context) => BarberBloc(
+        barberRepository: BarberRepositoryImpl(),
+        appointmentRepository: AppointmentRepositoryImpl(),
+      )..add(LoadBarbersByLocation(selectedLocationId)),
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: const Color(0xFFF2B705),
@@ -57,16 +61,6 @@ class _ScheduleBarberView extends StatelessWidget {
     return s[0].toUpperCase() + s.substring(1);
   }
 
-  final List<TimeOfDay> _timeSlots = const [
-    TimeOfDay(hour: 9, minute: 0),
-    TimeOfDay(hour: 10, minute: 0),
-    TimeOfDay(hour: 11, minute: 0),
-    TimeOfDay(hour: 14, minute: 0),
-    TimeOfDay(hour: 15, minute: 0),
-    TimeOfDay(hour: 16, minute: 0),
-    TimeOfDay(hour: 17, minute: 0),
-  ];
-
   @override
   Widget build(BuildContext context) {
     final yellow = const Color(0xFFF2B705);
@@ -98,6 +92,7 @@ class _ScheduleBarberView extends StatelessWidget {
         ),
         const SizedBox(height: 16),
 
+        // Lista de barberos
         Expanded(
           child: BlocBuilder<BarberBloc, BarberState>(
             builder: (context, state) {
@@ -171,7 +166,20 @@ class _ScheduleBarberView extends StatelessWidget {
                                         child: ChoiceChip(
                                           label: Text(label),
                                           selected: isActive,
-                                          onSelected: (_) => context.read<BarberBloc>().add(SelectBarberDate(d)),
+                                          onSelected: (_) async {
+                                            final services = await ServiceRepositoryImpl().getServices();
+                                            final requiredMinutes = services
+                                                .where((s) => selectedServiceIds.contains(s.id))
+                                                .fold<int>(0, (acc, s) => acc + s.durationMinutes);
+
+                                            context.read<BarberBloc>().add(
+                                                  SelectBarberDate(
+                                                    d,
+                                                    requiredMinutes: requiredMinutes,
+                                                    locationId: int.tryParse(selectedLocationId) ?? 0,
+                                                  ),
+                                                );
+                                          },
                                           shape: StadiumBorder(
                                             side: BorderSide(color: isActive ? yellow : Colors.grey.shade300),
                                           ),
@@ -193,32 +201,38 @@ class _ScheduleBarberView extends StatelessWidget {
                                   const SizedBox(height: 8),
 
                                   // Chips de hora
-                                  Wrap(
-                                    spacing: 8,
-                                    runSpacing: 8,
-                                    children: _timeSlots.map((t) {
-                                      final isActive = state.selectedTime != null &&
-                                          state.selectedTime!.hour == t.hour &&
-                                          state.selectedTime!.minute == t.minute;
+                                  if (state.availableSlots.isEmpty)
+                                    const Padding(
+                                      padding: EdgeInsets.symmetric(vertical: 8.0),
+                                      child: Text('Sin horarios disponibles para este día.'),
+                                    )
+                                  else
+                                    Wrap(
+                                      spacing: 8,
+                                      runSpacing: 8,
+                                      children: state.availableSlots.map((t) {
+                                        final isActive = state.selectedTime != null &&
+                                            state.selectedTime!.hour == t.hour &&
+                                            state.selectedTime!.minute == t.minute;
 
-                                      final formatted = TimeOfDay(hour: t.hour, minute: t.minute).format(context);
+                                        final formatted = t.format(context);
 
-                                      return ChoiceChip(
-                                        label: Text(formatted),
-                                        selected: isActive,
-                                        onSelected: (_) => context.read<BarberBloc>().add(SelectBarberTime(t)),
-                                        shape: StadiumBorder(
-                                          side: BorderSide(color: isActive ? yellow : Colors.grey.shade300),
-                                        ),
-                                        selectedColor: Colors.white,
-                                        showCheckmark: false,
-                                        labelStyle: TextStyle(
-                                          color: Colors.black,
-                                          fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-                                        ),
-                                      );
-                                    }).toList(),
-                                  ),
+                                        return ChoiceChip(
+                                          label: Text(formatted),
+                                          selected: isActive,
+                                          onSelected: (_) => context.read<BarberBloc>().add(SelectBarberTime(t)),
+                                          shape: StadiumBorder(
+                                            side: BorderSide(color: isActive ? yellow : Colors.grey.shade300),
+                                          ),
+                                          selectedColor: Colors.white,
+                                          showCheckmark: false,
+                                          labelStyle: TextStyle(
+                                            color: Colors.black,
+                                            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                                          ),
+                                        );
+                                      }).toList(),
+                                    ),
 
                                   const SizedBox(height: 8),
                                 ],
