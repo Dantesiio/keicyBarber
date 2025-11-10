@@ -2,6 +2,25 @@
 
 Aplicación móvil para la gestión de citas en la Peluquería Keicy.
 
+### ⚙️ Configuración del Entorno (.env)
+
+El archivo `.env` debe incluir las claves de conexión a Supabase:
+
+```env
+SUPABASE_URL=https://sjczmvfxzaajruyxgrhy.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqY3ptdmZ4emFhanJ1eXhncmh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNzE1MzQsImV4cCI6MjA3NDc0NzUzNH0.gjRo2Jd2ielDgZJ60B2m0AzzOlJpi0MAsc_7AtVtARs
+```
+
+### 🔐 Credenciales de Prueba
+
+Para navegar y probar los flujos, se pueden utilizar las siguientes credenciales de ejemplo (según los datos cargados en Supabase):
+
+| Tipo de Usuario | Email | Contraseña |
+|------------------|------------------------|-------------|
+| Cliente de prueba | test2@test.com | test1234 |
+
+>  *Las credenciales de prueba son únicamente para fines de desarrollo y validación del flujo.*
+
 ## 🚀 Flujos de la Aplicación
 
 A continuación se describen las instrucciones básicas para navegar a través de los flujos principales implementados en la aplicación.
@@ -56,5 +75,46 @@ La barra de navegación inferior permite un acceso rápido a las demás funciona
 *   **Inicio:** Pantalla principal de la aplicación.
 *   **Agendar:** Flujo para crear una nueva cita (funcionalidad futura).
 *   **Citas:** Listado de citas agendadas por el usuario (funcionalidad futura).
+
+### 3. Flujo de Agendamiento de Citas (Integrado con Supabase)
+
+Este flujo permite a los usuarios agendar una cita completa en la peluquería, seleccionando la sede, servicios, barbero, fecha y hora disponibles.
+
+#### Instrucciones:
+
+1. **Acceder al flujo de agendamiento**  
+   Desde la barra inferior, toca el ícono de **“Agendar”**.
+
+2. **Seleccionar Servicios**  
+   Elige uno o varios servicios (p. ej.: *Corte*, *Barba*, *Tinte*).  
+   → La **duración total** y el **costo estimado** se calculan automáticamente según los servicios seleccionados.
+
+3. **Seleccionar Sede**  
+   Elige la sede donde quieres atenderte (p. ej.: *Sede Norte*, *Sede Sur*).  
+   → Con base en la sede, se cargan los **barberos disponibles** en esa ubicación.
+
+4. **Seleccionar Barbero**  
+   Verás una lista de barberos con sus **especialidades** y **calificación**.  
+   → Selecciona uno para continuar.
+
+5. **Seleccionar Fecha**  
+   Se muestran los próximos **7 días** disponibles para ese barbero y sede.
+
+6. **Seleccionar Hora**  
+   Solo se listan horas **disponibles y válidas**, calculadas dinámicamente según:  
+   - La **duración total** de los servicios elegidos.  
+   - Las **citas ya registradas** en Supabase (evita traslapes).  
+   - Los **horarios de trabajo**: mañana **9:00–13:00** (1 p. m. reservado para almuerzo) y tarde **14:00–19:00**.  
+   → Ejemplo: si el servicio dura **120 min**, los últimos horarios válidos serían **11:00 a. m.** (mañana) y **5:00 p. m.** (tarde).
+
+7. **Confirmar Cita**  
+   Presiona **“Continuar”** para ver el **resumen** (servicios, sede, barbero, fecha/hora, precio estimado y duración).  
+   → Confirma para **guardar la reserva** en **Supabase**.
+
+---
+
+### 4. Flujo de Visualización de Citas (Pendiente para Sprint Futuro)
+
+En la pestaña **“Citas”**, se mostrarán todas las reservas creadas por el usuario, con su fecha, hora, barbero asignado y estado.
 
 ---
