@@ -1,25 +1,15 @@
 import '../../domain/entities/appointment.dart';
 import '../../domain/repositories/appointment_repository.dart';
+import '../source/appointment_data_source.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/material.dart';
 
 class AppointmentRepositoryImpl implements AppointmentRepository {
   final SupabaseClient _sb = Supabase.instance.client;
-    
+
   @override
   Future<List<Appointment>> getAppointments() async {
-    await Future.delayed(const Duration(seconds: 1));
-    return [
-      Appointment(
-        id: '1',
-        serviceName: 'Corte Y Barba',
-        dateTime: DateTime(2024, 1, 15, 10, 0),
-        barberName: 'Carlos Rodríguez',
-        location: 'Sede Bogotá',
-        price: 45000,
-        status: 'Confirmada',
-      ),
-    ];
+    return await _dataSource.getAllAppointments();
   }
 
   @override
@@ -67,8 +57,7 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
 
   @override
   Future<void> cancelAppointment(String id) async {
-    await Future.delayed(const Duration(seconds: 1));
-    // Mock: simula cancelación exitosa
+    await _dataSource.cancelAppointment(id);
   }
 
   @override
@@ -81,7 +70,11 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   }) async {
     final localDay = DateTime(day.year, day.month, day.day);
 
-    final startOfDayUtc = DateTime.utc(localDay.year, localDay.month, localDay.day);
+    final startOfDayUtc = DateTime.utc(
+      localDay.year,
+      localDay.month,
+      localDay.day,
+    );
     final endOfDayUtc = startOfDayUtc.add(const Duration(days: 1));
 
     final rows = await _sb
@@ -117,12 +110,20 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
       ..._generateWindow(localDay, 14, 19),
     ];
 
-    bool _overlaps(DateTime aStart, DateTime aEnd, DateTime bStart, DateTime bEnd) {
+    bool _overlaps(
+      DateTime aStart,
+      DateTime aEnd,
+      DateTime bStart,
+      DateTime bEnd,
+    ) {
       return aStart.isBefore(bEnd) && bStart.isBefore(aEnd);
     }
 
     final now = DateTime.now();
-    final isToday = now.year == localDay.year && now.month == localDay.month && now.day == localDay.day;
+    final isToday =
+        now.year == localDay.year &&
+        now.month == localDay.month &&
+        now.day == localDay.day;
 
     final available = <TimeOfDay>[];
     for (final start in candidates) {
@@ -145,7 +146,10 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
     final d = now.day.toString().padLeft(2, '0');
 
     const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789';
-    final rand = List.generate(4, (_) => chars[(DateTime.now().microsecond % chars.length)]).join();
+    final rand = List.generate(
+      4,
+      (_) => chars[(DateTime.now().microsecond % chars.length)],
+    ).join();
 
     return 'BK-$y$m$d-$rand';
   }

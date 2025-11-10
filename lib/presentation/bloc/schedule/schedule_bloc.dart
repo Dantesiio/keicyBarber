@@ -25,7 +25,10 @@ class ScheduleBloc extends Bloc<ScheduleEvent, ScheduleState> {
     }
   }
 
-  void _onToggleServiceSelection(ToggleServiceSelection event, Emitter<ScheduleState> emit) {
+  void _onToggleServiceSelection(
+    ToggleServiceSelection event,
+    Emitter<ScheduleState> emit,
+  ) {
     final currentState = state;
     if (currentState is ScheduleLoaded) {
       final currentSelection = currentState.selectedServiceIds;
