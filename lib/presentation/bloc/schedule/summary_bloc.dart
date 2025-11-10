@@ -27,29 +27,54 @@ class SummaryBloc extends Bloc<SummaryEvent, SummaryState> {
     on<ConfirmAppointmentEvent>(_onConfirmAppointment);
   }
 
-  Future<void> _onLoadSummaryDetails(LoadSummaryDetails event, Emitter<SummaryState> emit) async {
+  Future<void> _onLoadSummaryDetails(
+    LoadSummaryDetails event,
+    Emitter<SummaryState> emit,
+  ) async {
     emit(SummaryLoading());
     try {
       // Obtener todos los datos en paralelo
       final futureServices = serviceRepository.getServices();
       final futureLocations = locationRepository.getLocations();
-      final futureBarbers = barberRepository.getBarbersByLocation(event.locationId);
+      final futureBarbers = barberRepository.getBarbersByLocation(
+        event.locationId,
+      );
 
-      final results = await Future.wait([futureServices, futureLocations, futureBarbers]);
+      final results = await Future.wait([
+        futureServices,
+        futureLocations,
+        futureBarbers,
+      ]);
 
       final allServices = results[0] as List<Service>;
       final allLocations = results[1] as List<Location>;
       final allBarbers = results[2] as List<Barber>;
 
       // Filtrar para obtener los elementos seleccionados
-      final selectedServices = allServices.where((s) => event.serviceIds.contains(s.id)).toList();
+      final selectedServices = allServices
+          .where((s) => event.serviceIds.contains(s.id))
+          .toList();
       final location = allLocations.firstWhere((l) => l.id == event.locationId);
       final barber = allBarbers.firstWhere((b) => b.id == event.barberId);
 
-      final totalPrice = selectedServices.fold(0.0, (sum, service) => sum + service.price);
-      final totalDuration = selectedServices.fold(0, (sum, service) => sum + service.durationMinutes);
+      final totalPrice = selectedServices.fold(
+        0.0,
+        (sum, service) => sum + service.price,
+      );
+      final totalDuration = selectedServices.fold(
+        0,
+        (sum, service) => sum + service.durationMinutes,
+      );
 
-      emit(SummaryLoaded(selectedServices: selectedServices, location: location, barber: barber, totalPrice: totalPrice, totalDuration: totalDuration));
+      emit(
+        SummaryLoaded(
+          selectedServices: selectedServices,
+          location: location,
+          barber: barber,
+          totalPrice: totalPrice,
+          totalDuration: totalDuration,
+        ),
+      );
     } catch (e) {
       emit(SummaryError('Error al cargar el resumen de la cita.'));
     }
@@ -70,11 +95,18 @@ class SummaryBloc extends Bloc<SummaryEvent, SummaryState> {
 
       final selectedServices = current.selectedServices;
 
-      final totalDurationMinutes =
-          selectedServices.fold<int>(0, (sum, s) => sum + s.durationMinutes);
+      final totalDurationMinutes = selectedServices.fold<int>(
+        0,
+        (sum, s) => sum + s.durationMinutes,
+      );
 
-      final estimatedPriceCents =
-          selectedServices.fold<int>(0, (sum, s) => sum + s.price.toInt());
+      // We store prices in the domain as currency units (pesos, double).
+      // When creating the appointment we need estimated price in cents,
+      // so multiply by 100 and convert to int.
+      final estimatedPriceCents = selectedServices.fold<int>(
+        0,
+        (sum, s) => sum + (s.price * 100).toInt(),
+      );
 
       final serviceIds = selectedServices
           .map((s) => int.tryParse(s.id))

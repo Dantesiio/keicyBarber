@@ -74,6 +74,7 @@ class AppointmentsBloc extends Bloc<AppointmentsEvent, AppointmentsState> {
         ),
       );
     } catch (e) {
+      print("❌ Error al cargar citas: $e");
       emit(
         AppointmentsErrorState(
           message: 'Error al cargar citas',
@@ -89,36 +90,35 @@ class AppointmentsBloc extends Bloc<AppointmentsEvent, AppointmentsState> {
     Emitter<AppointmentsState> emit,
   ) async {
     try {
-      // Actualizar el estado de la cita
-      final updatedAppointments = state.appointments.map((appointment) {
-        if (appointment.id == event.appointmentId) {
-          return Appointment(
-            id: appointment.id,
-            serviceName: appointment.serviceName,
-            dateTime: appointment.dateTime,
-            barberName: appointment.barberName,
-            location: appointment.location,
-            price: appointment.price,
-            status: 'Cancelada',
-          );
-        }
-        return appointment;
-      }).toList();
-
+      await _getAppointments.repository.cancelAppointment(event.appointmentId);
+      final appointments = await _getAppointments.execute();
       emit(
         AppointmentsLoadedState(
-          appointments: updatedAppointments,
+          appointments: appointments,
           currentTab: state.currentTab,
         ),
       );
     } catch (e) {
+      print("❌ Error al cancelar cita: $e");
       emit(
         AppointmentsErrorState(
-          message: 'Error al cancelar cita',
+          message: 'Error al cancelar cita: $e',
           appointments: state.appointments,
           currentTab: state.currentTab,
         ),
       );
+      await Future.delayed(const Duration(seconds: 2));
+      try {
+        final appointments = await _getAppointments.execute();
+        emit(
+          AppointmentsLoadedState(
+            appointments: appointments,
+            currentTab: state.currentTab,
+          ),
+        );
+      } catch (e2) {
+        print("❌ Error al recargar citas: $e2");
+      }
     }
   }
 

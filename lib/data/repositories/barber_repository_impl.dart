@@ -19,14 +19,16 @@ class BarberRepositoryImpl implements BarberRepository {
     // Nombre desde profiles
     final barbers = await _sb
         .from('barbers')
-        .select('profile_id, average_rating, profiles!inner(first_name, last_name)')
-        .inFilter('profile_id', ids); // ← reemplaza in_ por inFilter
+        .select(
+          'profile_id, average_rating, profiles!inner(first_name, last_name)',
+        )
+        .inFilter('profile_id', ids);
 
     // Especialidades por barbero
     final bs = await _sb
         .from('barber_services')
         .select('barber_id, services!inner(name)')
-        .inFilter('barber_id', ids); // ← reemplaza in_ por inFilter
+        .inFilter('barber_id', ids);
 
     // Mapear especialidades
     final Map<String, List<String>> specByBarber = {};

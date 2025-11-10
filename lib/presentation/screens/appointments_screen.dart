@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:keicybarber/presentation/bloc/navigation/navigation_cubit.dart';
 import '../bloc/appointments/appointments_bloc.dart';
 import '../../domain/entities/appointment.dart';
 
@@ -16,8 +17,12 @@ class AppointmentsScreen extends StatefulWidget {
 class AppointmentsScreenState extends State<AppointmentsScreen> {
   @override
   Widget build(BuildContext context) {
-    return BlocProvider(
-      create: (context) => AppointmentsBloc(),
+    return BlocListener<NavigationCubit, int>(
+      listener: (context, currentPage) {
+        if (currentPage == 2) {
+          context.read<AppointmentsBloc>().add(LoadAppointmentsEvent());
+        }
+      },
       child: const AppointmentsContent(),
     );
   }
@@ -32,18 +37,20 @@ class AppointmentsContent extends StatelessWidget {
 
     return BlocBuilder<AppointmentsBloc, AppointmentsState>(
       builder: (context, state) {
-        // Carga inicial de datos
         if (state is AppointmentsInitialState) {
-          print("Cargando citas inicialmente");
           context.read<AppointmentsBloc>().add(LoadAppointmentsEvent());
         }
 
         List<Appointment> filteredAppointments = [];
         if (state is AppointmentsLoadedState) {
           if (state.currentTab == 0) {
-            // Próximas
+            // Próximas: pendiente, confirmada, en proceso
             filteredAppointments = state.appointments
-                .where((a) => a.status == 'Confirmada')
+                .where(
+                  (a) => a.status == 'Pendiente' ||
+                         a.status == 'Confirmada' ||
+                         a.status == 'En Proceso',
+                )
                 .toList();
           } else if (state.currentTab == 1) {
             // Completadas
@@ -51,7 +58,7 @@ class AppointmentsContent extends StatelessWidget {
                 .where((a) => a.status == 'Completada')
                 .toList();
           } else if (state.currentTab == 2) {
-            // Canceladas
+            // Canceladas: incluye cancelada_cliente, cancelada_admin
             filteredAppointments = state.appointments
                 .where((a) => a.status == 'Cancelada')
                 .toList();
@@ -59,13 +66,15 @@ class AppointmentsContent extends StatelessWidget {
         }
 
         // Contar citas por estado
-        int confirmadasCount = 0;
+        int proximasCount = 0;
         int completadasCount = 0;
         int canceladasCount = 0;
 
         if (state is AppointmentsLoadedState) {
-          confirmadasCount = state.appointments
-              .where((a) => a.status == 'Confirmada')
+          proximasCount = state.appointments
+              .where((a) => a.status == 'Pendiente' ||
+                           a.status == 'Confirmada' ||
+                           a.status == 'En Proceso')
               .length;
           completadasCount = state.appointments
               .where((a) => a.status == 'Completada')
@@ -111,8 +120,8 @@ class AppointmentsContent extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _CounterWidget(
-                    count: confirmadasCount,
-                    label: 'Confirmadas',
+                    count: proximasCount,
+                    label: 'Próximas',
                     color: yellow,
                   ),
                   _CounterWidget(
@@ -132,39 +141,42 @@ class AppointmentsContent extends StatelessWidget {
             // Tabs
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Row(
-                children: [
-                  _TabButton(
-                    label: 'Próximas',
-                    isActive: state.currentTab == 0,
-                    badge: confirmadasCount > 0 ? '$confirmadasCount' : null,
-                    onTap: () {
-                      context.read<AppointmentsBloc>().add(
-                        ChangeTabEvent(tabIndex: 0),
-                      );
-                    },
-                  ),
-                  const SizedBox(width: 12),
-                  _TabButton(
-                    label: 'Completadas',
-                    isActive: state.currentTab == 1,
-                    onTap: () {
-                      context.read<AppointmentsBloc>().add(
-                        ChangeTabEvent(tabIndex: 1),
-                      );
-                    },
-                  ),
-                  const SizedBox(width: 12),
-                  _TabButton(
-                    label: 'Canceladas',
-                    isActive: state.currentTab == 2,
-                    onTap: () {
-                      context.read<AppointmentsBloc>().add(
-                        ChangeTabEvent(tabIndex: 2),
-                      );
-                    },
-                  ),
-                ],
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: [
+                    _TabButton(
+                      label: 'Próximas',
+                      isActive: state.currentTab == 0,
+                      badge: proximasCount > 0 ? '$proximasCount' : null,
+                      onTap: () {
+                        context.read<AppointmentsBloc>().add(
+                          ChangeTabEvent(tabIndex: 0),
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 12),
+                    _TabButton(
+                      label: 'Completadas',
+                      isActive: state.currentTab == 1,
+                      onTap: () {
+                        context.read<AppointmentsBloc>().add(
+                          ChangeTabEvent(tabIndex: 1),
+                        );
+                      },
+                    ),
+                    const SizedBox(width: 12),
+                    _TabButton(
+                      label: 'Canceladas',
+                      isActive: state.currentTab == 2,
+                      onTap: () {
+                        context.read<AppointmentsBloc>().add(
+                          ChangeTabEvent(tabIndex: 2),
+                        );
+                      },
+                    ),
+                  ],
+                ),
               ),
             ),
             const SizedBox(height: 16),
@@ -399,8 +411,7 @@ class _AppointmentCard extends StatelessWidget {
                   Expanded(
                     child: OutlinedButton(
                       onPressed: () {
-                        // Falta reagendar
-                        print("Reagendar cita ${appointment.id}");
+                        // TODO: Implementar reagendar
                       },
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: Colors.black),
@@ -493,7 +504,6 @@ class _AppointmentCard extends StatelessWidget {
                               appointmentId: appointmentId,
                             ),
                           );
-                          print("Cita cancelada: $appointmentId");
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: yellow,

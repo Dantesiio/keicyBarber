@@ -35,7 +35,7 @@ class Appointment {
         serviceName =
             serviceData['services']['name'] as String? ?? 'Sin servicio';
         final priceCents = serviceData['services']['price_cents'] as int? ?? 0;
-        price = priceCents / 100.0;
+        price = priceCents * 1;
       }
     }
 
@@ -53,9 +53,8 @@ class Appointment {
       locationName = json['locations']['name'] as String;
     }
 
-    String statusSpanish = _mapStatusToSpanish(
-      json['status'] as String? ?? 'pending',
-    );
+    final statusRaw = json['status'] as String? ?? 'pending';
+    String statusSpanish = _mapStatusToSpanish(statusRaw);
 
     return Appointment(
       id: json['id'].toString(),
@@ -69,29 +68,39 @@ class Appointment {
   }
 
   static String _mapStatusToSpanish(String status) {
-    switch (status) {
+    switch (status.toLowerCase()) {
+      case 'confirmada':
       case 'confirmed':
         return 'Confirmada';
+      case 'en_proceso':
+        return 'En Proceso';
+      case 'completada':
       case 'completed':
         return 'Completada';
+      case 'cancelada_cliente':
+      case 'cancelada_admin':
+      case 'cancelada':
       case 'cancelled':
         return 'Cancelada';
+      case 'pendiente':
       case 'pending':
         return 'Pendiente';
+      case 'no_show':
+        return 'No Asistió';
       default:
         return 'Desconocido';
     }
   }
 
   static String _mapStatusToEnglish(String status) {
-    switch (status) {
-      case 'Confirmada':
+    switch (status.toLowerCase()) {
+      case 'confirmada':
         return 'confirmed';
-      case 'Completada':
+      case 'completada':
         return 'completed';
-      case 'Cancelada':
+      case 'cancelada':
         return 'cancelled';
-      case 'Pendiente':
+      case 'pendiente':
         return 'pending';
       default:
         return 'pending';
