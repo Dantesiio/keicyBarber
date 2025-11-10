@@ -15,6 +15,7 @@ import 'presentation/screens/profile_screen.dart';
 import 'presentation/bloc/home/home_bloc.dart';
 import 'presentation/bloc/home/home_event.dart';
 import 'presentation/bloc/navigation/navigation_cubit.dart';
+import 'presentation/bloc/appointments/appointments_bloc.dart';
 
 import 'domain/usecases/get_services.dart';
 import 'domain/usecases/login_user.dart';
@@ -56,7 +57,6 @@ Future<void> main() async {
       print(
         "Por favor, revisa que los nombres en tu .env sean EXACTAMENTE 'SUPABASE_URL' y 'SUPABASE_ANON_KEY'.",
       );
-      print("==============================================");
       return;
     }
   } catch (e) {
@@ -149,6 +149,9 @@ class _MyAppState extends State<MyApp> {
           create: (context) =>
               ProfileBloc(getProfileUseCase: getProfileUseCase)
                 ..add(LoadUserProfile()),
+        ),
+        BlocProvider<AppointmentsBloc>(
+          create: (context) => AppointmentsBloc(),
         ),
       ],
       child: MaterialApp(

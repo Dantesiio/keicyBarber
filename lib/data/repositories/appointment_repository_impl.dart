@@ -8,18 +8,44 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
 
   @override
   Future<List<Appointment>> getAppointments() async {
-    await Future.delayed(const Duration(seconds: 1));
-    return [
-      Appointment(
-        id: '1',
-        serviceName: 'Corte Y Barba',
-        dateTime: DateTime(2024, 1, 15, 10, 0),
-        barberName: 'Carlos Rodríguez',
-        location: 'Sede Bogotá',
-        price: 45000,
-        status: 'Confirmada',
-      ),
-    ];
+    final uid = _sb.auth.currentUser?.id;
+    if (uid == null) return [];
+
+    try {
+      final rows = await _sb
+          .from('appointments')
+          .select('''
+            id,
+            start_time,
+            status,
+            appointment_services(
+              services(
+                name,
+                price_cents
+              )
+            ),
+            barbers(
+              profiles(
+                first_name,
+                last_name
+              )
+            ),
+            locations(
+              name
+            )
+          ''')
+          .eq('client_id', uid)
+          .order('start_time', ascending: false);
+
+      final appointments = (rows as List)
+          .map((json) => Appointment.fromJson(json))
+          .toList();
+
+      return appointments;
+    } catch (e) {
+      print("❌ Error al cargar citas: $e");
+      return [];
+    }
   }
 
   @override
@@ -67,8 +93,15 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
 
   @override
   Future<void> cancelAppointment(String id) async {
-    await Future.delayed(const Duration(seconds: 1));
-    // Mock: simula cancelación exitosa
+    try {
+      await _sb
+          .from('appointments')
+          .update({'status': 'cancelada_cliente'})
+          .eq('id', id);
+    } catch (e) {
+      print("❌ Error al cancelar cita: $e");
+      rethrow;
+    }
   }
 
   @override

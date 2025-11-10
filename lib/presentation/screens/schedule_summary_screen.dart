@@ -6,6 +6,7 @@ import 'package:keicybarber/data/repositories/barber_repository_impl.dart';
 import 'package:keicybarber/data/repositories/location_repository_impl.dart';
 import 'package:keicybarber/data/repositories/service_repository_impl.dart';
 import 'package:keicybarber/domain/entities/appointment.dart';
+import 'package:keicybarber/presentation/bloc/appointments/appointments_bloc.dart';
 import 'package:keicybarber/presentation/bloc/navigation/navigation_cubit.dart';
 import 'package:keicybarber/presentation/bloc/schedule/summary_bloc.dart';
 
@@ -69,6 +70,7 @@ class _ScheduleSummaryView extends StatelessWidget {
         if (state is SummaryConfirmationSuccess) {
           Navigator.of(context).popUntil((route) => route.isFirst);
           context.read<NavigationCubit>().setPage(2);
+          context.read<AppointmentsBloc>().add(LoadAppointmentsEvent());
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
               content: Text('¡Cita confirmada con éxito!'),
@@ -109,8 +111,6 @@ class _ScheduleSummaryView extends StatelessWidget {
                   ],
                 ),
               ),
-
-              // Contenido
               Expanded(
                 child: SingleChildScrollView(
                   padding: const EdgeInsets.all(16),

@@ -113,15 +113,13 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           const SizedBox(height: 20),
                           ElevatedButton(
-                            // Asegúrate de que esta línea llama a _submitForm
                             onPressed: _submitForm,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: yellow,
                               foregroundColor: Colors.black,
                               padding: const EdgeInsets.symmetric(vertical: 14),
                             ),
-                            // ===== CAMBIO VISUAL DE PRUEBA =====
-                            child: const Text('PROBAR LOGIN'),
+                            child: const Text('LOGIN'),
                           ),
                           const SizedBox(height: 12),
                           TextButton(
