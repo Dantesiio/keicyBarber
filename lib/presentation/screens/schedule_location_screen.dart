@@ -4,6 +4,7 @@ import 'package:keicybarber/domain/usecases/get_locations.dart';
 import 'package:keicybarber/data/repositories/location_repository_impl.dart';
 import 'package:keicybarber/presentation/bloc/schedule/location_bloc.dart';
 import 'package:keicybarber/presentation/screens/schedule_barber_screen.dart';
+import 'package:keicybarber/presentation/screens/locations_map_screen.dart';
 
 class ScheduleLocationScreen extends StatelessWidget {
   final Set<String> selectedServiceIds;
@@ -23,7 +24,34 @@ class ScheduleLocationScreen extends StatelessWidget {
       create: (context) => LocationBloc(getLocations: getLocations)..add(LoadLocations()),
       child: Scaffold(
         // Usamos un Scaffold para tener un AppBar y un fondo consistente
-        appBar: AppBar(backgroundColor: const Color(0xFFF2B705), elevation: 0, iconTheme: const IconThemeData(color: Colors.black)),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFFF2B705),
+          elevation: 0,
+          iconTheme: const IconThemeData(color: Colors.black),
+          actions: [
+            BlocBuilder<LocationBloc, LocationState>(
+              builder: (context, state) {
+                if (state is LocationLoaded && state.locations.isNotEmpty) {
+                  return IconButton(
+                    icon: const Icon(Icons.map_outlined),
+                    tooltip: 'Ver en mapa',
+                    onPressed: () {
+                      Navigator.of(context).push(
+                        MaterialPageRoute(
+                          builder: (_) => LocationsMapScreen(
+                            locations: state.locations,
+                            selectedLocationId: state.selectedLocationId,
+                          ),
+                        ),
+                      );
+                    },
+                  );
+                }
+                return const SizedBox.shrink();
+              },
+            ),
+          ],
+        ),
         body: _ScheduleLocationView(selectedServiceIds: selectedServiceIds),
       ),
     );
@@ -96,13 +124,34 @@ class _ScheduleLocationView extends StatelessWidget {
                             width: 2,
                           ),
                         ),
-                        child: ListTile(                          
+                        child: ListTile(
                           isThreeLine: true,
                           title: Text(location.name, style: const TextStyle(fontWeight: FontWeight.bold)),
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(location.address),
+                              const SizedBox(height: 4),
+                              if (location.latitude != null && location.longitude != null)
+                                TextButton.icon(
+                                  onPressed: () {
+                                    Navigator.of(context).push(
+                                      MaterialPageRoute(
+                                        builder: (_) => LocationsMapScreen(
+                                          locations: state.locations,
+                                          selectedLocationId: location.id,
+                                        ),
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon(Icons.map, size: 16),
+                                  label: const Text('Ver en mapa'),
+                                  style: TextButton.styleFrom(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    minimumSize: Size.zero,
+                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                  ),
+                                ),
                             ],
                           ),
                           trailing: isSelected

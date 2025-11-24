@@ -25,6 +25,7 @@ import 'data/datasources/profile_data_source.dart';
 import 'data/repositories/auth_repository_impl.dart';
 import 'domain/usecases/register_user.dart';
 import 'domain/usecases/reset_password.dart';
+import 'domain/usecases/logout_user.dart';
 import 'presentation/bloc/auth/auth_bloc.dart';
 import 'data/repositories/profile_repository_impl.dart';
 import 'domain/usecases/get_profile.dart';
@@ -131,6 +132,7 @@ class _MyAppState extends State<MyApp> {
     final registerUserUseCase = RegisterUser(authRepository);
     final loginUserUseCase = LoginUser(authRepository);
     final resetPasswordUseCase = ResetPassword(authRepository);
+    final logoutUserUseCase = LogoutUser(authRepository);
 
     final profileRepository = ProfileRepositoryImpl(
       profileDataSource: profileDataSource,
@@ -152,6 +154,7 @@ class _MyAppState extends State<MyApp> {
             registerUserUseCase: registerUserUseCase,
             loginUserUseCase: loginUserUseCase,
             resetPasswordUseCase: resetPasswordUseCase,
+            logoutUserUseCase: logoutUserUseCase,
           ),
         ),
         BlocProvider<ProfileBloc>(

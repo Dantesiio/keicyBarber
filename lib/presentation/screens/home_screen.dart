@@ -3,6 +3,8 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:keicybarber/presentation/bloc/navigation/navigation_cubit.dart';
 import '../bloc/home/home_bloc.dart';
 import '../bloc/home/home_state.dart';
+import '../bloc/profile/profile_bloc.dart';
+import '../bloc/profile/profile_state.dart';
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -35,18 +37,26 @@ class HomeScreen extends StatelessWidget {
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: const [
+                  children: [
                     Expanded(
-                      child: Text(
-                        '¡Hola, Juan!',
-                        style: TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.bold,
-                        ),
+                      child: BlocBuilder<ProfileBloc, ProfileState>(
+                        builder: (context, profileState) {
+                          String userName = 'Usuario';
+                          if (profileState is ProfileLoaded) {
+                            userName = profileState.profile.firstName;
+                          }
+                          return Text(
+                            '¡Hola, $userName!',
+                            style: const TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          );
+                        },
                       ),
                     ),
-                    SizedBox(width: 8),
-                    Text('250\nPuntos', textAlign: TextAlign.right),
+                    const SizedBox(width: 8),
+                    const Text('250\nPuntos', textAlign: TextAlign.right),
                   ],
                 ),
               ),

@@ -109,7 +109,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           final isLoading = state is ProfileUpdating;
           
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.all(24.0),
             child: Form(
               key: _formKey,
               child: Column(
@@ -119,51 +119,84 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   // Email (solo lectura)
                   TextFormField(
                     initialValue: widget.profile.email,
-                    decoration: const InputDecoration(
+                    enabled: false,
+                    decoration: InputDecoration(
                       labelText: 'Correo Electrónico',
-                      enabled: false,
+                      prefixIcon: const Icon(Icons.email_outlined),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[200],
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   // Nombre
                   TextFormField(
                     controller: _firstNameController,
-                    decoration: const InputDecoration(
+                    enabled: !isLoading,
+                    decoration: InputDecoration(
                       labelText: 'Nombre',
+                      prefixIcon: const Icon(Icons.person_outline),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[50],
                     ),
                     validator: (v) => (v == null || v.trim().isEmpty)
                         ? 'El nombre es requerido'
                         : null,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   // Apellido
                   TextFormField(
                     controller: _lastNameController,
-                    decoration: const InputDecoration(
+                    enabled: !isLoading,
+                    decoration: InputDecoration(
                       labelText: 'Apellido',
+                      prefixIcon: const Icon(Icons.person_outline),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[50],
                     ),
                     validator: (v) => (v == null || v.trim().isEmpty)
                         ? 'El apellido es requerido'
                         : null,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   // Teléfono
                   TextFormField(
                     controller: _phoneController,
                     keyboardType: TextInputType.phone,
-                    decoration: const InputDecoration(
+                    enabled: !isLoading,
+                    decoration: InputDecoration(
                       labelText: 'Teléfono',
                       hintText: 'Opcional',
+                      prefixIcon: const Icon(Icons.phone_outlined),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      filled: true,
+                      fillColor: Colors.grey[50],
                     ),
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 20),
                   // Fecha de Nacimiento
                   InkWell(
-                    onTap: () => _selectDate(context),
+                    onTap: isLoading ? null : () => _selectDate(context),
                     child: InputDecorator(
-                      decoration: const InputDecoration(
+                      decoration: InputDecoration(
                         labelText: 'Fecha de Nacimiento',
-                        suffixIcon: Icon(Icons.calendar_today),
+                        prefixIcon: const Icon(Icons.calendar_today_outlined),
+                        suffixIcon: const Icon(Icons.arrow_drop_down),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey[50],
                       ),
                       child: Text(
                         _selectedBirthDate != null
@@ -171,8 +204,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             : 'Seleccionar fecha',
                         style: TextStyle(
                           color: _selectedBirthDate != null
-                              ? Colors.black
-                              : Colors.grey,
+                              ? Colors.black87
+                              : Colors.grey[600],
+                          fontSize: 16,
                         ),
                       ),
                     ),
@@ -185,6 +219,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       backgroundColor: yellow,
                       foregroundColor: Colors.black,
                       padding: const EdgeInsets.symmetric(vertical: 16),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                      elevation: 2,
                     ),
                     child: isLoading
                         ? const SizedBox(
@@ -197,7 +235,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           )
                         : const Text(
                             'Guardar Cambios',
-                            style: TextStyle(fontWeight: FontWeight.bold),
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                   ),
                 ],

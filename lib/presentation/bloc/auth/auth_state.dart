@@ -29,3 +29,7 @@ class ResetPasswordFailure extends AuthState {
   @override
   List<Object> get props => [error];
 }
+
+class LogoutLoading extends AuthState {}
+
+class LogoutSuccess extends AuthState {}
