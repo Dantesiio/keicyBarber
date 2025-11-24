@@ -4,9 +4,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'presentation/bloc/home/home_bloc.dart';
-import 'presentation/bloc/home/home_event.dart';
-import 'presentation/bloc/navigation/navigation_cubit.dart';
+import 'package:keicybarber/presentation/screens/schedule_location_screen.dart';
 import 'presentation/screens/welcome_screen.dart';
 import 'presentation/screens/home_screen.dart';
 import 'presentation/screens/login_screen.dart';
@@ -15,6 +13,10 @@ import 'presentation/screens/schedule_screen.dart';
 import 'presentation/screens/appointments_screen.dart';
 import 'presentation/screens/profile_screen.dart';
 import 'presentation/screens/forgot_password_screen.dart';
+import 'presentation/bloc/home/home_bloc.dart';
+import 'presentation/bloc/home/home_event.dart';
+import 'presentation/bloc/navigation/navigation_cubit.dart';
+import 'presentation/bloc/appointments/appointments_bloc.dart';
 import 'domain/usecases/get_services.dart';
 import 'domain/usecases/login_user.dart';
 import 'data/repositories/service_repository_impl.dart';
@@ -35,57 +37,97 @@ String _toIntlTag(Locale l) => l.countryCode == null || l.countryCode!.isEmpty
     ? l.languageCode
     : '${l.languageCode}_${l.countryCode}';
 
-void main() async {
+Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // Cargar variables de entorno
   String? supabaseUrl;
   String? supabaseAnonKey;
-  
+
+  // --- INICIO DEL BLOQUE DE DIAGNÓSTICO ---
   try {
     await dotenv.load(fileName: ".env");
+
+    print("¡ÉXITO! El archivo .env fue encontrado y cargado por el paquete.");
+
     supabaseUrl = dotenv.env['SUPABASE_URL'];
     supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'];
-    if (supabaseUrl != null && supabaseAnonKey != null) {
-      print("✅ Archivo .env cargado correctamente");
-    } else {
-      print("⚠️ Archivo .env no contiene las variables necesarias");
-      supabaseUrl = null;
-      supabaseAnonKey = null;
+
+    if (supabaseUrl == null || supabaseAnonKey == null) {
+      print(
+        "ERROR CRÍTICO: El archivo se leyó, pero una o ambas claves son NULAS.",
+      );
+      print(
+        "Por favor, revisa que los nombres en tu .env sean EXACTAMENTE 'SUPABASE_URL' y 'SUPABASE_ANON_KEY'.",
+      );
+      // Usar valores por defecto en lugar de return
+      supabaseUrl = 'https://sjczmvfxzaajruyxgrhy.supabase.co';
+      supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqY3ptdmZ4emFhanJ1eXhncmh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNzE1MzQsImV4cCI6MjA3NDc0NzUzNH0.gjRo2Jd2ielDgZJ60B2m0AzzOlJpi0MAsc_7AtVtARs';
     }
   } catch (e) {
-    print("⚠️ Error al cargar .env: $e");
-    print("⚠️ Usando credenciales por defecto");
-    supabaseUrl = null;
-    supabaseAnonKey = null;
+    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+    print("¡FALLÓ LA CARGA DEL ARCHIVO .ENV!");
+    print("Se produjo una excepción: $e");
+    print(
+      "Esto casi siempre significa que el archivo .env no fue incluido en el 'build' de la app.",
+    );
+    print(
+      "Asegúrate de que está en la raíz del proyecto y en pubspec.yaml -> assets.",
+    );
+    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
+    // Usar valores por defecto
+    supabaseUrl = 'https://sjczmvfxzaajruyxgrhy.supabase.co';
+    supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqY3ptdmZ4emFhanJ1eXhncmh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNzE1MzQsImV4cCI6MjA3NDc0NzUzNH0.gjRo2Jd2ielDgZJ60B2m0AzzOlJpi0MAsc_7AtVtARs';
   }
 
   // Inicializar Supabase
   await Supabase.initialize(
-    url: supabaseUrl ?? 'https://sjczmvfxzaajruyxgrhy.supabase.co',
-    anonKey: supabaseAnonKey ??
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqY3ptdmZ4emFhanJ1eXhncmh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNzE1MzQsImV4cCI6MjA3NDc0NzUzNH0.gjRo2Jd2ielDgZJ60B2m0AzzOlJpi0MAsc_7AtVtARs',
+    url: supabaseUrl!,
+    anonKey: supabaseAnonKey!,
   );
+
+  final deviceLocale = WidgetsBinding.instance.platformDispatcher.locale;
+  final initialTag = _toIntlTag(deviceLocale);
+  await initializeDateFormatting(initialTag);
+  Intl.defaultLocale = initialTag;
 
   runApp(const MyApp());
 }
 
-class MyApp extends StatelessWidget {
+class MyApp extends StatefulWidget {
   const MyApp({super.key});
+  @override
+  State<MyApp> createState() => _MyAppState();
+}
+
+class _MyAppState extends State<MyApp> {
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.platformDispatcher.onLocaleChanged = () async {
+      final sysLocale = WidgetsBinding.instance.platformDispatcher.locale;
+      final tag = _toIntlTag(sysLocale);
+      await initializeDateFormatting(tag);
+      Intl.defaultLocale = tag;
+      if (mounted) setState(() {});
+    };
+  }
 
   @override
   Widget build(BuildContext context) {
     final primaryYellow = const Color(0xFFF2B705);
+
     final serviceRepository = ServiceRepositoryImpl();
     final getServicesUseCase = GetServices(serviceRepository);
 
     final supabaseClient = Supabase.instance.client;
     final authDataSource = AuthDataSourceImpl(supabaseClient);
     final profileDataSource = ProfileDataSourceImpl(supabaseClient);
+
     final authRepository = AuthRepositoryImpl(
       authDataSource: authDataSource,
       profileDataSource: profileDataSource,
     );
+
     final registerUserUseCase = RegisterUser(authRepository);
     final loginUserUseCase = LoginUser(authRepository);
     final resetPasswordUseCase = ResetPassword(authRepository);
@@ -94,6 +136,7 @@ class MyApp extends StatelessWidget {
       profileDataSource: profileDataSource,
       client: supabaseClient,
     );
+
     final getProfileUseCase = GetProfile(profileRepository);
     final updateProfileUseCase = UpdateProfile(profileRepository);
 
@@ -117,6 +160,9 @@ class MyApp extends StatelessWidget {
             updateProfileUseCase: updateProfileUseCase,
           )..add(LoadUserProfile()),
         ),
+        BlocProvider<AppointmentsBloc>(
+          create: (context) => AppointmentsBloc(),
+        ),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -126,12 +172,40 @@ class MyApp extends StatelessWidget {
           useMaterial3: true,
           scaffoldBackgroundColor: Colors.white,
         ),
+
+        localizationsDelegates: const [
+          GlobalMaterialLocalizations.delegate,
+          GlobalWidgetsLocalizations.delegate,
+          GlobalCupertinoLocalizations.delegate,
+        ],
+        supportedLocales: const [
+          Locale('es', 'CO'),
+          Locale('es'),
+          Locale('en', 'US'),
+          Locale('en'),
+        ],
+        localeResolutionCallback: (locale, supported) {
+          final chosen =
+              locale ??
+              WidgetsBinding.instance.platformDispatcher.locale ??
+              supported.first;
+          final tag = _toIntlTag(chosen);
+          initializeDateFormatting(tag);
+          Intl.defaultLocale = tag;
+          return chosen;
+        },
+
         home: const WelcomeScreen(),
         routes: {
           '/login': (context) => const LoginScreen(),
           '/register': (context) => const RegisterScreen(),
           '/forgot-password': (context) => const ForgotPasswordScreen(),
           '/home': (context) => const RootScreen(),
+          '/schedule': (context) => const ScheduleScreen(),
+          '/schedule-location': (context) =>
+              ScheduleLocationScreen(selectedServiceIds: <String>{}),
+          '/appointments': (context) => const AppointmentsScreen(),
+          '/profile': (context) => const ProfileScreen(),
         },
       ),
     );

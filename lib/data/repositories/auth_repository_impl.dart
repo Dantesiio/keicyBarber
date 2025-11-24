@@ -14,10 +14,7 @@ class AuthRepositoryImpl implements AuthRepository {
 
   @override
   Future<void> registerUser(Profile profile, String password) async {
-    // Registrar el usuario en el servicio de Auth de Supabase
     final userId = await authDataSource.signUp(profile.email, password);
-
-    // Asignar el ID obtenido al perfil y crearlo en la tabla 'profiles'
     profile.id = userId;
     await profileDataSource.createProfile(profile);
   }
