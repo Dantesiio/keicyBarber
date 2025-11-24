@@ -2,17 +2,23 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../domain/entities/profile.dart';
 import '../../../domain/usecases/login_user.dart';
 import '../../../domain/usecases/register_user.dart';
+import '../../../domain/usecases/reset_password.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final RegisterUser registerUserUseCase;
   final LoginUser loginUserUseCase;
+  final ResetPassword resetPasswordUseCase;
 
-  AuthBloc({required this.registerUserUseCase, required this.loginUserUseCase})
-    : super(AuthInitial()) {
+  AuthBloc({
+    required this.registerUserUseCase,
+    required this.loginUserUseCase,
+    required this.resetPasswordUseCase,
+  }) : super(AuthInitial()) {
     on<RegisterSubmitted>(_onRegisterSubmitted);
     on<LoginSubmitted>(_onLoginSubmitted);
+    on<ResetPasswordRequested>(_onResetPasswordRequested);
   }
 
   Future<void> _onRegisterSubmitted(
@@ -56,6 +62,22 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       print('--- PASO 4: BLOC --- ¡ERROR CAPTURADO! ${e.toString()}');
       print('[AuthBloc] Error en login: ${e.toString()}');
       emit(AuthFailure(e.toString()));
+    }
+  }
+
+  Future<void> _onResetPasswordRequested(
+    ResetPasswordRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(ResetPasswordLoading());
+    try {
+      print('[AuthBloc] Intentando enviar email de recuperación para: ${event.email}');
+      await resetPasswordUseCase.call(event.email);
+      print('[AuthBloc] Email de recuperación enviado exitosamente');
+      emit(ResetPasswordSuccess());
+    } catch (e) {
+      print('[AuthBloc] Error al enviar email de recuperación: ${e.toString()}');
+      emit(ResetPasswordFailure(e.toString()));
     }
   }
 }

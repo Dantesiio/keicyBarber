@@ -123,7 +123,14 @@ class _LoginScreenState extends State<LoginScreen> {
                             // ===== CAMBIO VISUAL DE PRUEBA =====
                             child: const Text('PROBAR LOGIN'),
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 8),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.of(context).pushNamed('/forgot-password');
+                            },
+                            child: const Text('¿Olvidaste tu contraseña?'),
+                          ),
+                          const SizedBox(height: 4),
                           TextButton(
                             onPressed: () {
                               Navigator.of(context).pushNamed('/register');

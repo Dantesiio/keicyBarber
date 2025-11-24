@@ -26,4 +26,9 @@ class AuthRepositoryImpl implements AuthRepository {
   Future<void> signInWithEmailAndPassword(String email, String password) async {
     return await authDataSource.signInWithEmailAndPassword(email, password);
   }
+
+  @override
+  Future<void> resetPassword(String email) async {
+    return await authDataSource.resetPassword(email);
+  }
 }

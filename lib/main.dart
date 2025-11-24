@@ -1,5 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/intl.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'presentation/bloc/home/home_bloc.dart';
 import 'presentation/bloc/home/home_event.dart';
 import 'presentation/bloc/navigation/navigation_cubit.dart';
@@ -10,27 +14,56 @@ import 'presentation/screens/register_screen.dart';
 import 'presentation/screens/schedule_screen.dart';
 import 'presentation/screens/appointments_screen.dart';
 import 'presentation/screens/profile_screen.dart';
+import 'presentation/screens/forgot_password_screen.dart';
 import 'domain/usecases/get_services.dart';
 import 'domain/usecases/login_user.dart';
 import 'data/repositories/service_repository_impl.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'data/datasources/auth_data_source.dart';
 import 'data/datasources/profile_data_source.dart';
 import 'data/repositories/auth_repository_impl.dart';
 import 'domain/usecases/register_user.dart';
+import 'domain/usecases/reset_password.dart';
 import 'presentation/bloc/auth/auth_bloc.dart';
 import 'data/repositories/profile_repository_impl.dart';
 import 'domain/usecases/get_profile.dart';
+import 'domain/usecases/update_profile.dart';
 import 'presentation/bloc/profile/profile_bloc.dart';
 import 'presentation/bloc/profile/profile_event.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
+String _toIntlTag(Locale l) => l.countryCode == null || l.countryCode!.isEmpty
+    ? l.languageCode
+    : '${l.languageCode}_${l.countryCode}';
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized(); // Asegurar inicialización
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // Cargar variables de entorno
+  String? supabaseUrl;
+  String? supabaseAnonKey;
+  
+  try {
+    await dotenv.load(fileName: ".env");
+    supabaseUrl = dotenv.env['SUPABASE_URL'];
+    supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'];
+    if (supabaseUrl != null && supabaseAnonKey != null) {
+      print("✅ Archivo .env cargado correctamente");
+    } else {
+      print("⚠️ Archivo .env no contiene las variables necesarias");
+      supabaseUrl = null;
+      supabaseAnonKey = null;
+    }
+  } catch (e) {
+    print("⚠️ Error al cargar .env: $e");
+    print("⚠️ Usando credenciales por defecto");
+    supabaseUrl = null;
+    supabaseAnonKey = null;
+  }
 
   // Inicializar Supabase
   await Supabase.initialize(
-    url: 'https://sjczmvfxzaajruyxgrhy.supabase.co',
-    anonKey:
+    url: supabaseUrl ?? 'https://sjczmvfxzaajruyxgrhy.supabase.co',
+    anonKey: supabaseAnonKey ??
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqY3ptdmZ4emFhanJ1eXhncmh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNzE1MzQsImV4cCI6MjA3NDc0NzUzNH0.gjRo2Jd2ielDgZJ60B2m0AzzOlJpi0MAsc_7AtVtARs',
   );
 
@@ -55,11 +88,14 @@ class MyApp extends StatelessWidget {
     );
     final registerUserUseCase = RegisterUser(authRepository);
     final loginUserUseCase = LoginUser(authRepository);
+    final resetPasswordUseCase = ResetPassword(authRepository);
+
     final profileRepository = ProfileRepositoryImpl(
       profileDataSource: profileDataSource,
       client: supabaseClient,
     );
     final getProfileUseCase = GetProfile(profileRepository);
+    final updateProfileUseCase = UpdateProfile(profileRepository);
 
     return MultiBlocProvider(
       providers: [
@@ -72,12 +108,14 @@ class MyApp extends StatelessWidget {
           create: (context) => AuthBloc(
             registerUserUseCase: registerUserUseCase,
             loginUserUseCase: loginUserUseCase,
+            resetPasswordUseCase: resetPasswordUseCase,
           ),
         ),
         BlocProvider<ProfileBloc>(
-          create: (context) =>
-              ProfileBloc(getProfileUseCase: getProfileUseCase)
-                ..add(LoadUserProfile()),
+          create: (context) => ProfileBloc(
+            getProfileUseCase: getProfileUseCase,
+            updateProfileUseCase: updateProfileUseCase,
+          )..add(LoadUserProfile()),
         ),
       ],
       child: MaterialApp(
@@ -92,6 +130,7 @@ class MyApp extends StatelessWidget {
         routes: {
           '/login': (context) => const LoginScreen(),
           '/register': (context) => const RegisterScreen(),
+          '/forgot-password': (context) => const ForgotPasswordScreen(),
           '/home': (context) => const RootScreen(),
         },
       ),
