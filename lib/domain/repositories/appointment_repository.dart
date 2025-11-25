@@ -20,6 +20,12 @@ abstract class AppointmentRepository {
     required int requiredMinutes,
     int slotMinutes = 30,
   });
-  
+
+  Future<void> rescheduleAppointment({
+    required String appointmentId,
+    required DateTime newStartTime,
+    required int durationMinutes,
+  });
+
   Future<void> cancelAppointment(String id);
 }

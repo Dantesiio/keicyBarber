@@ -197,4 +197,38 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
 
     return 'BK-$y$m$d-$rand';
   }
+
+  @override
+  Future<void> rescheduleAppointment({
+    required String appointmentId,
+    required DateTime newStartTime,
+    required int durationMinutes,
+  }) async {
+    try {
+      final startUtc = newStartTime.toUtc();
+      final endUtc = startUtc.add(Duration(minutes: durationMinutes));
+
+      final res = await _sb
+          .from('appointments')
+          .select('reschedule_count')
+          .eq('id', appointmentId)
+          .single();
+
+      final currentCount = res['reschedule_count'] as int? ?? 0;
+
+      await _sb
+          .from('appointments')
+          .update({
+            'start_time': startUtc.toIso8601String(),
+            'end_time': endUtc.toIso8601String(),
+            'reschedule_count': currentCount + 1,
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+            'status': 'pendiente',
+          })
+          .eq('id', appointmentId);
+    } catch (e) {
+      print("❌ Error al reagendar cita: $e");
+      throw Exception('Error al reagendar la cita: $e');
+    }
+  }
 }
