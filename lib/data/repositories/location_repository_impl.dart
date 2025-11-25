@@ -9,14 +9,16 @@ class LocationRepositoryImpl implements LocationRepository {
   Future<List<Location>> getLocations() async {
     final rows = await _sb
         .from('locations')
-        .select('id, name, address')
+        .select('id, name, address, latitude, longitude')
         .order('id');
 
     return (rows as List).map((r) {
       return Location(
         id: r['id'].toString(),
         name: r['name'] as String,
-        address: (r['address'] as String?) ?? ''
+        address: (r['address'] as String?) ?? '',
+        latitude: r['latitude'] != null ? (r['latitude'] as num).toDouble() : null,
+        longitude: r['longitude'] != null ? (r['longitude'] as num).toDouble() : null,
       );
     }).toList();
   }

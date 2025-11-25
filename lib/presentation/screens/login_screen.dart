@@ -15,6 +15,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _formKey = GlobalKey<FormState>();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
+  bool _isPasswordVisible = false;
 
   @override
   void dispose() {
@@ -55,36 +56,44 @@ class _LoginScreenState extends State<LoginScreen> {
             }
           },
           builder: (context, state) {
-            if (state is AuthLoading) {
-              return const Center(child: CircularProgressIndicator());
-            }
+            final isLoading = state is AuthLoading;
             return SingleChildScrollView(
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(24.0),
                 child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.stretch,
                   children: [
-                    // ... (tu widget Container no cambia)
-                    const SizedBox(height: 24),
-                    Container(
-                      width: double.infinity,
-                      padding: const EdgeInsets.symmetric(
-                        vertical: 20,
-                        horizontal: 16,
-                      ),
-                      decoration: BoxDecoration(
-                        color: yellow,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      child: const Text(
-                        'Inicia sesión',
-                        style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
+                    const SizedBox(height: 40),
+                    // Icono de la app
+                    Center(
+                      child: CircleAvatar(
+                        radius: 50,
+                        backgroundColor: yellow.withOpacity(0.2),
+                        child: const Icon(
+                          Icons.content_cut,
+                          size: 50,
+                          color: Color(0xFFF2B705),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 32),
+                    // Título de bienvenida
+                    const Text(
+                      'Bienvenido',
+                      style: TextStyle(
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Inicia sesión para continuar',
+                      style: TextStyle(fontSize: 16, color: Colors.black54),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: 40),
                     Form(
                       key: _formKey,
                       child: Column(
@@ -93,40 +102,114 @@ class _LoginScreenState extends State<LoginScreen> {
                           TextFormField(
                             controller: _emailController,
                             keyboardType: TextInputType.emailAddress,
-                            decoration: const InputDecoration(
+                            enabled: !isLoading,
+                            decoration: InputDecoration(
                               labelText: 'Correo electrónico',
+                              prefixIcon: const Icon(Icons.email_outlined),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              filled: true,
+                              fillColor: Colors.grey[50],
                             ),
                             validator: (v) => (v == null || v.isEmpty)
                                 ? 'Ingresa tu correo'
-                                : null,
+                                : (!v.contains('@') ? 'Correo inválido' : null),
+                            textInputAction: TextInputAction.next,
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 16),
                           TextFormField(
                             controller: _passwordController,
-                            obscureText: true,
-                            decoration: const InputDecoration(
+                            obscureText: !_isPasswordVisible,
+                            enabled: !isLoading,
+                            decoration: InputDecoration(
                               labelText: 'Contraseña',
+                              prefixIcon: const Icon(Icons.lock_outline),
+                              suffixIcon: IconButton(
+                                icon: Icon(
+                                  _isPasswordVisible
+                                      ? Icons.visibility_outlined
+                                      : Icons.visibility_off_outlined,
+                                ),
+                                onPressed: () {
+                                  setState(() {
+                                    _isPasswordVisible = !_isPasswordVisible;
+                                  });
+                                },
+                              ),
+                              border: OutlineInputBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              filled: true,
+                              fillColor: Colors.grey[50],
                             ),
                             validator: (v) => (v == null || v.isEmpty)
                                 ? 'Ingresa la contraseña'
-                                : null,
+                                : (v.length < 6 ? 'Mínimo 6 caracteres' : null),
+                            onFieldSubmitted: (_) => _submitForm(),
+                            textInputAction: TextInputAction.done,
                           ),
-                          const SizedBox(height: 20),
+                          const SizedBox(height: 12),
+                          Align(
+                            alignment: Alignment.centerRight,
+                            child: TextButton(
+                              onPressed: isLoading
+                                  ? null
+                                  : () {
+                                      Navigator.of(
+                                        context,
+                                      ).pushNamed('/forgot-password');
+                                    },
+                              child: const Text('¿Olvidaste tu contraseña?'),
+                            ),
+                          ),
+                          const SizedBox(height: 24),
                           ElevatedButton(
-                            onPressed: _submitForm,
+                            onPressed: isLoading ? null : _submitForm,
                             style: ElevatedButton.styleFrom(
                               backgroundColor: yellow,
                               foregroundColor: Colors.black,
-                              padding: const EdgeInsets.symmetric(vertical: 14),
+                              padding: const EdgeInsets.symmetric(vertical: 16),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              elevation: 2,
                             ),
-                            child: const Text('LOGIN'),
+                            child: isLoading
+                                ? const SizedBox(
+                                    height: 20,
+                                    width: 20,
+                                    child: CircularProgressIndicator(
+                                      strokeWidth: 2,
+                                      valueColor: AlwaysStoppedAnimation<Color>(
+                                        Colors.black,
+                                      ),
+                                    ),
+                                  )
+                                : const Text(
+                                    'Iniciar sesión',
+                                    style: TextStyle(
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
                           ),
-                          const SizedBox(height: 12),
-                          TextButton(
-                            onPressed: () {
-                              Navigator.of(context).pushNamed('/register');
-                            },
-                            child: const Text('¿No tienes cuenta? Regístrate'),
+                          const SizedBox(height: 16),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              const Text('¿No tienes cuenta? '),
+                              TextButton(
+                                onPressed: isLoading
+                                    ? null
+                                    : () {
+                                        Navigator.of(
+                                          context,
+                                        ).pushNamed('/register');
+                                      },
+                                child: const Text('Regístrate'),
+                              ),
+                            ],
                           ),
                         ],
                       ),

@@ -12,11 +12,12 @@ import 'presentation/screens/register_screen.dart';
 import 'presentation/screens/schedule_screen.dart';
 import 'presentation/screens/appointments_screen.dart';
 import 'presentation/screens/profile_screen.dart';
+import 'presentation/screens/forgot_password_screen.dart';
 import 'presentation/bloc/home/home_bloc.dart';
 import 'presentation/bloc/home/home_event.dart';
 import 'presentation/bloc/navigation/navigation_cubit.dart';
 import 'presentation/bloc/appointments/appointments_bloc.dart';
-
+import 'presentation/bloc/appointments/appointments_bloc.dart';
 import 'domain/usecases/get_services.dart';
 import 'domain/usecases/login_user.dart';
 import 'data/repositories/service_repository_impl.dart';
@@ -24,9 +25,12 @@ import 'data/datasources/auth_data_source.dart';
 import 'data/datasources/profile_data_source.dart';
 import 'data/repositories/auth_repository_impl.dart';
 import 'domain/usecases/register_user.dart';
+import 'domain/usecases/reset_password.dart';
+import 'domain/usecases/logout_user.dart';
 import 'presentation/bloc/auth/auth_bloc.dart';
 import 'data/repositories/profile_repository_impl.dart';
 import 'domain/usecases/get_profile.dart';
+import 'domain/usecases/update_profile.dart';
 import 'presentation/bloc/profile/profile_bloc.dart';
 import 'presentation/bloc/profile/profile_event.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
@@ -74,10 +78,7 @@ Future<void> main() async {
   }
 
   // Inicializar Supabase
-  await Supabase.initialize(
-    url: dotenv.env['SUPABASE_URL']!,
-    anonKey: dotenv.env['SUPABASE_ANON_KEY']!,
-  );
+  await Supabase.initialize(url: supabaseUrl!, anonKey: supabaseAnonKey!);
 
   final deviceLocale = WidgetsBinding.instance.platformDispatcher.locale;
   final initialTag = _toIntlTag(deviceLocale);
@@ -124,6 +125,8 @@ class _MyAppState extends State<MyApp> {
 
     final registerUserUseCase = RegisterUser(authRepository);
     final loginUserUseCase = LoginUser(authRepository);
+    final resetPasswordUseCase = ResetPassword(authRepository);
+    final logoutUserUseCase = LogoutUser(authRepository);
 
     final profileRepository = ProfileRepositoryImpl(
       profileDataSource: profileDataSource,
@@ -131,6 +134,7 @@ class _MyAppState extends State<MyApp> {
     );
 
     final getProfileUseCase = GetProfile(profileRepository);
+    final updateProfileUseCase = UpdateProfile(profileRepository);
 
     return MultiBlocProvider(
       providers: [
@@ -143,16 +147,19 @@ class _MyAppState extends State<MyApp> {
           create: (context) => AuthBloc(
             registerUserUseCase: registerUserUseCase,
             loginUserUseCase: loginUserUseCase,
+            resetPasswordUseCase: resetPasswordUseCase,
+            logoutUserUseCase: logoutUserUseCase,
           ),
         ),
         BlocProvider<ProfileBloc>(
-          create: (context) =>
-              ProfileBloc(getProfileUseCase: getProfileUseCase)
-                ..add(LoadUserProfile()),
+          create: (context) => ProfileBloc(
+            getProfileUseCase: getProfileUseCase,
+            updateProfileUseCase: updateProfileUseCase,
+          )..add(LoadUserProfile()),
         ),
-        BlocProvider<AppointmentsBloc>(
-          create: (context) => AppointmentsBloc(),
-        ),
+        BlocProvider<AppointmentsBloc>(create: (context) => AppointmentsBloc()),
+        BlocProvider<AppointmentsBloc>(create: (context) => AppointmentsBloc()),
+        BlocProvider<AppointmentsBloc>(create: (context) => AppointmentsBloc()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
@@ -189,6 +196,7 @@ class _MyAppState extends State<MyApp> {
         routes: {
           '/login': (context) => const LoginScreen(),
           '/register': (context) => const RegisterScreen(),
+          '/forgot-password': (context) => const ForgotPasswordScreen(),
           '/home': (context) => const RootScreen(),
           '/schedule': (context) => const ScheduleScreen(),
           '/schedule-location': (context) =>

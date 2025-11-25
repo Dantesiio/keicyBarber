@@ -18,3 +18,18 @@ class AuthFailure extends AuthState {
   @override
   List<Object> get props => [error];
 }
+
+class ResetPasswordLoading extends AuthState {}
+
+class ResetPasswordSuccess extends AuthState {}
+
+class ResetPasswordFailure extends AuthState {
+  final String error;
+  const ResetPasswordFailure(this.error);
+  @override
+  List<Object> get props => [error];
+}
+
+class LogoutLoading extends AuthState {}
+
+class LogoutSuccess extends AuthState {}

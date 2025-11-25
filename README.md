@@ -10,12 +10,63 @@ Para ver una demostración completa de todas las funcionalidades de la aplicaci�
 
 ### ⚙️ Configuración del Entorno (.env)
 
-El archivo `.env` debe incluir las claves de conexión a Supabase:
+El archivo `.env` debe incluir las claves de conexión a Supabase y Google Maps:
 
 ```env
 SUPABASE_URL=https://sjczmvfxzaajruyxgrhy.supabase.co
 SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqY3ptdmZ4emFhanJ1eXhncmh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNzE1MzQsImV4cCI6MjA3NDc0NzUzNH0.gjRo2Jd2ielDgZJ60B2m0AzzOlJpi0MAsc_7AtVtARs
+GOOGLE_MAPS_API_KEY=tu_api_key_de_google_maps_aqui
 ```
+
+### 🗺️ Configuración de Google Maps
+
+Para que los mapas funcionen correctamente, necesitas configurar una API key de Google Maps en tu archivo `.env`:
+
+1. **Obtén tu API key de Google Maps** desde [Google Cloud Console](https://console.cloud.google.com/)
+2. **Agrega la API key a tu archivo `.env`** en la raíz del proyecto:
+   ```env
+   GOOGLE_MAPS_API_KEY=tu_api_key_aqui
+   ```
+
+#### Android
+
+La API key se lee automáticamente desde el archivo `.env` durante el build. No necesitas modificar ningún archivo manualmente.
+
+#### iOS
+
+Para iOS, configura la variable de entorno antes de ejecutar la app. Puedes hacerlo de dos formas:
+
+**Opción 1 (Recomendada):** Usar el script helper que lee automáticamente desde `.env`:
+```bash
+source scripts/setup_ios_maps_env.sh
+flutter run
+```
+
+**Opción 2:** Configurar manualmente la variable de entorno:
+```bash
+export GOOGLE_MAPS_API_KEY=$(grep GOOGLE_MAPS_API_KEY .env | cut -d '=' -f2)
+flutter run
+```
+
+O configurar directamente:
+```bash
+export GOOGLE_MAPS_API_KEY=tu_api_key_aqui
+flutter run
+```
+
+> **Nota de seguridad:** La API key nunca se hardcodea en el código. Siempre se lee desde variables de entorno o archivos de configuración que no se suben al repositorio (el archivo `.env` está en `.gitignore`).
+
+#### Base de Datos
+
+Asegúrate de que la tabla `locations` en Supabase tenga las columnas `latitude` y `longitude` (tipo `double precision` o `numeric`). Si no las tienes, agrégalas:
+
+```sql
+ALTER TABLE locations 
+ADD COLUMN IF NOT EXISTS latitude DOUBLE PRECISION,
+ADD COLUMN IF NOT EXISTS longitude DOUBLE PRECISION;
+```
+
+Luego actualiza las ubicaciones con sus coordenadas correspondientes.
 
 ### 🔐 Credenciales de Prueba
 
@@ -97,6 +148,7 @@ Este flujo permite a los usuarios agendar una cita completa en la peluquería, s
 
 3. **Seleccionar Sede**  
    Elige la sede donde quieres atenderte (p. ej.: *Sede Norte*, *Sede Sur*).  
+   → Puedes ver todas las sedes en un mapa tocando el ícono de mapa en la barra superior o el botón "Ver en mapa" en cada tarjeta de sede.  
    → Con base en la sede, se cargan los **barberos disponibles** en esa ubicación.
 
 4. **Seleccionar Barbero**  

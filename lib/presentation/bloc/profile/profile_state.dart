@@ -24,3 +24,24 @@ class ProfileError extends ProfileState {
   @override
   List<Object> get props => [message];
 }
+
+class ProfileUpdating extends ProfileState {
+  final Profile profile;
+  const ProfileUpdating(this.profile);
+  @override
+  List<Object> get props => [profile];
+}
+
+class ProfileUpdateSuccess extends ProfileState {
+  final Profile profile;
+  const ProfileUpdateSuccess(this.profile);
+  @override
+  List<Object> get props => [profile];
+}
+
+class ProfileUpdateError extends ProfileState {
+  final String message;
+  const ProfileUpdateError(this.message);
+  @override
+  List<Object> get props => [message];
+}

@@ -3,6 +3,8 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 abstract class AuthDataSource {
   Future<String> signUp(String email, String password);
   Future<void> signInWithEmailAndPassword(String email, String password);
+  Future<void> resetPassword(String email);
+  Future<void> signOut();
 }
 
 class AuthDataSourceImpl implements AuthDataSource {
@@ -63,6 +65,33 @@ class AuthDataSourceImpl implements AuthDataSource {
     } catch (e) {
       print('[AuthDataSource] Error inesperado en SignIn: ${e.toString()}');
       throw Exception('An unexpected error occurred: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<void> resetPassword(String email) async {
+    try {
+      print('[AuthDataSource] Enviando petición de recuperación de contraseña para: $email');
+      await client.auth.resetPasswordForEmail(
+        email,
+        redirectTo: 'keicybarber://reset-password', // URL de deep link
+      );
+      print('[AuthDataSource] Email de recuperación enviado exitosamente a: $email');
+    } catch (e) {
+      print('[AuthDataSource] Error al enviar email de recuperación: ${e.toString()}');
+      throw Exception('Error al enviar el email de recuperación: ${e.toString()}');
+    }
+  }
+
+  @override
+  Future<void> signOut() async {
+    try {
+      print('[AuthDataSource] Cerrando sesión del usuario');
+      await client.auth.signOut();
+      print('[AuthDataSource] Sesión cerrada exitosamente');
+    } catch (e) {
+      print('[AuthDataSource] Error al cerrar sesión: ${e.toString()}');
+      throw Exception('Error al cerrar sesión: ${e.toString()}');
     }
   }
 }

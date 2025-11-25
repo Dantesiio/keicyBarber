@@ -23,4 +23,9 @@ class ProfileRepositoryImpl implements ProfileRepository {
 
     return Profile.fromJson(profileData);
   }
+
+  @override
+  Future<void> updateProfile(Profile profile) async {
+    await profileDataSource.updateProfile(profile);
+  }
 }

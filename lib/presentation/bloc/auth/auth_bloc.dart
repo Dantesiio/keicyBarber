@@ -2,17 +2,27 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../domain/entities/profile.dart';
 import '../../../domain/usecases/login_user.dart';
 import '../../../domain/usecases/register_user.dart';
+import '../../../domain/usecases/reset_password.dart';
+import '../../../domain/usecases/logout_user.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
 class AuthBloc extends Bloc<AuthEvent, AuthState> {
   final RegisterUser registerUserUseCase;
   final LoginUser loginUserUseCase;
+  final ResetPassword resetPasswordUseCase;
+  final LogoutUser logoutUserUseCase;
 
-  AuthBloc({required this.registerUserUseCase, required this.loginUserUseCase})
-    : super(AuthInitial()) {
+  AuthBloc({
+    required this.registerUserUseCase,
+    required this.loginUserUseCase,
+    required this.resetPasswordUseCase,
+    required this.logoutUserUseCase,
+  }) : super(AuthInitial()) {
     on<RegisterSubmitted>(_onRegisterSubmitted);
     on<LoginSubmitted>(_onLoginSubmitted);
+    on<ResetPasswordRequested>(_onResetPasswordRequested);
+    on<LogoutRequested>(_onLogoutRequested);
   }
 
   Future<void> _onRegisterSubmitted(
@@ -55,6 +65,38 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     } catch (e) {
       print('--- PASO 4: BLOC --- ¡ERROR CAPTURADO! ${e.toString()}');
       print('[AuthBloc] Error en login: ${e.toString()}');
+      emit(AuthFailure(e.toString()));
+    }
+  }
+
+  Future<void> _onResetPasswordRequested(
+    ResetPasswordRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(ResetPasswordLoading());
+    try {
+      print('[AuthBloc] Intentando enviar email de recuperación para: ${event.email}');
+      await resetPasswordUseCase.call(event.email);
+      print('[AuthBloc] Email de recuperación enviado exitosamente');
+      emit(ResetPasswordSuccess());
+    } catch (e) {
+      print('[AuthBloc] Error al enviar email de recuperación: ${e.toString()}');
+      emit(ResetPasswordFailure(e.toString()));
+    }
+  }
+
+  Future<void> _onLogoutRequested(
+    LogoutRequested event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(LogoutLoading());
+    try {
+      print('[AuthBloc] Intentando cerrar sesión');
+      await logoutUserUseCase.call();
+      print('[AuthBloc] Sesión cerrada exitosamente');
+      emit(LogoutSuccess());
+    } catch (e) {
+      print('[AuthBloc] Error al cerrar sesión: ${e.toString()}');
       emit(AuthFailure(e.toString()));
     }
   }

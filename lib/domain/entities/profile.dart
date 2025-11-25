@@ -40,4 +40,23 @@ class Profile {
       phone: json['phone'] as String?,
     );
   }
+
+  // Método útil para crear una copia con algunos campos modificados
+  Profile copyWith({
+    String? id,
+    String? firstName,
+    String? lastName,
+    String? email,
+    DateTime? birthDate,
+    String? phone,
+  }) {
+    return Profile(
+      id: id ?? this.id,
+      firstName: firstName ?? this.firstName,
+      lastName: lastName ?? this.lastName,
+      email: email ?? this.email,
+      birthDate: birthDate ?? this.birthDate,
+      phone: phone ?? this.phone,
+    );
+  }
 }

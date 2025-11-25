@@ -5,6 +5,8 @@ abstract class ProfileDataSource {
   Future<void> createProfile(Profile profile);
 
   Future<Map<String, dynamic>> getCurrentUserProfileData();
+  
+  Future<void> updateProfile(Profile profile);
 }
 
 class ProfileDataSourceImpl implements ProfileDataSource {
@@ -14,8 +16,7 @@ class ProfileDataSourceImpl implements ProfileDataSource {
 
   @override
   Future<void> createProfile(Profile profile) async {
-    final response = await client.from('profiles').insert(profile.toJson());
-    // TODO: MANEJO DE ERRORES SI RESPONSE ES NULO
+    await client.from('profiles').insert(profile.toJson());
   }
 
   @override
@@ -31,6 +32,20 @@ class ProfileDataSourceImpl implements ProfileDataSource {
     } catch (e) {
       print('Error en ProfileDataSource: ${e.toString()}');
       rethrow; // Relanza el error para que sea manejado en capas superiores
+    }
+  }
+
+  @override
+  Future<void> updateProfile(Profile profile) async {
+    try {
+      final userId = client.auth.currentUser!.id;
+      await client
+          .from('profiles')
+          .update(profile.toJson())
+          .eq('id', userId);
+    } catch (e) {
+      print('Error al actualizar perfil en ProfileDataSource: ${e.toString()}');
+      rethrow;
     }
   }
 }
