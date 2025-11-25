@@ -17,6 +17,7 @@ import 'presentation/bloc/home/home_bloc.dart';
 import 'presentation/bloc/home/home_event.dart';
 import 'presentation/bloc/navigation/navigation_cubit.dart';
 import 'presentation/bloc/appointments/appointments_bloc.dart';
+import 'presentation/bloc/appointments/appointments_bloc.dart';
 import 'domain/usecases/get_services.dart';
 import 'domain/usecases/login_user.dart';
 import 'data/repositories/service_repository_impl.dart';
@@ -60,9 +61,7 @@ Future<void> main() async {
       print(
         "Por favor, revisa que los nombres en tu .env sean EXACTAMENTE 'SUPABASE_URL' y 'SUPABASE_ANON_KEY'.",
       );
-      // Usar valores por defecto en lugar de return
-      supabaseUrl = 'https://sjczmvfxzaajruyxgrhy.supabase.co';
-      supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqY3ptdmZ4emFhanJ1eXhncmh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNzE1MzQsImV4cCI6MjA3NDc0NzUzNH0.gjRo2Jd2ielDgZJ60B2m0AzzOlJpi0MAsc_7AtVtARs';
+      return;
     }
   } catch (e) {
     print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
@@ -75,16 +74,11 @@ Future<void> main() async {
       "Asegúrate de que está en la raíz del proyecto y en pubspec.yaml -> assets.",
     );
     print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-    // Usar valores por defecto
-    supabaseUrl = 'https://sjczmvfxzaajruyxgrhy.supabase.co';
-    supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqY3ptdmZ4emFhanJ1eXhncmh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNzE1MzQsImV4cCI6MjA3NDc0NzUzNH0.gjRo2Jd2ielDgZJ60B2m0AzzOlJpi0MAsc_7AtVtARs';
+    return;
   }
 
   // Inicializar Supabase
-  await Supabase.initialize(
-    url: supabaseUrl!,
-    anonKey: supabaseAnonKey!,
-  );
+  await Supabase.initialize(url: supabaseUrl!, anonKey: supabaseAnonKey!);
 
   final deviceLocale = WidgetsBinding.instance.platformDispatcher.locale;
   final initialTag = _toIntlTag(deviceLocale);
@@ -163,9 +157,9 @@ class _MyAppState extends State<MyApp> {
             updateProfileUseCase: updateProfileUseCase,
           )..add(LoadUserProfile()),
         ),
-        BlocProvider<AppointmentsBloc>(
-          create: (context) => AppointmentsBloc(),
-        ),
+        BlocProvider<AppointmentsBloc>(create: (context) => AppointmentsBloc()),
+        BlocProvider<AppointmentsBloc>(create: (context) => AppointmentsBloc()),
+        BlocProvider<AppointmentsBloc>(create: (context) => AppointmentsBloc()),
       ],
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
