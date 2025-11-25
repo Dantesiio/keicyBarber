@@ -1,3 +1,6 @@
+import java.util.Properties
+import java.io.File
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -6,10 +9,11 @@ plugins {
 }
 
 // Leer variables desde .env
-val keystoreProperties = java.util.Properties()
-val envFile = java.io.File(project.rootDir.parentFile, ".env")
+val keystoreProperties = Properties()
+val envFile = File(project.rootDir.parentFile, ".env")
+
 if (envFile.exists()) {
-    envFile.readLines().forEach { line ->
+    envFile.readLines().forEach { line: String ->
         if (line.contains("=") && !line.startsWith("#")) {
             val (key, value) = line.split("=", limit = 2)
             keystoreProperties[key.trim()] = value.trim().removeSurrounding("\"", "\"")
