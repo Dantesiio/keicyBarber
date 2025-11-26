@@ -27,31 +27,44 @@ class ScheduleSummaryScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) => SummaryBloc(
-        serviceRepository: ServiceRepositoryImpl(),
-        locationRepository: LocationRepositoryImpl(),
-        barberRepository: BarberRepositoryImpl(),
-        appointmentRepository: AppointmentRepositoryImpl(),
-      )..add(LoadSummaryDetails(
-          serviceIds: selectedServiceIds,
-          locationId: selectedLocationId,
-          barberId: selectedBarberId,
-        )),
+      create: (context) =>
+          SummaryBloc(
+            serviceRepository: ServiceRepositoryImpl(),
+            locationRepository: LocationRepositoryImpl(),
+            barberRepository: BarberRepositoryImpl(),
+            appointmentRepository: AppointmentRepositoryImpl(),
+          )..add(
+            LoadSummaryDetails(
+              serviceIds: selectedServiceIds,
+              locationId: selectedLocationId,
+              barberId: selectedBarberId,
+            ),
+          ),
       child: Scaffold(
         appBar: AppBar(
           backgroundColor: const Color(0xFFF2B705),
           elevation: 0,
           iconTheme: const IconThemeData(color: Colors.black),
         ),
-        body: _ScheduleSummaryView(selectedDateTime: selectedDateTime),
+        body: _ScheduleSummaryView(
+          selectedDateTime: selectedDateTime,
+          selectedBarberId: selectedBarberId,
+          selectedLocationId: selectedLocationId,
+        ),
       ),
     );
   }
 }
 
 class _ScheduleSummaryView extends StatelessWidget {
-  const _ScheduleSummaryView({required this.selectedDateTime});
+  const _ScheduleSummaryView({
+    required this.selectedDateTime,
+    required this.selectedBarberId,
+    required this.selectedLocationId,
+  });
   final DateTime selectedDateTime;
+  final String selectedBarberId;
+  final String selectedLocationId;
 
   String _capitalize(String s) =>
       s.isNotEmpty ? s[0].toUpperCase() + s.substring(1) : s;
@@ -59,10 +72,14 @@ class _ScheduleSummaryView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final yellow = const Color(0xFFF2B705);
-    final currencyFormatter =
-        NumberFormat.currency(locale: 'es_CO', symbol: r'$', decimalDigits: 0);
-    final dateLong =
-        _capitalize(DateFormat("EEEE d 'de' MMMM y", 'es_CO').format(selectedDateTime));
+    final currencyFormatter = NumberFormat.currency(
+      locale: 'es_CO',
+      symbol: r'$',
+      decimalDigits: 0,
+    );
+    final dateLong = _capitalize(
+      DateFormat("EEEE d 'de' MMMM y", 'es_CO').format(selectedDateTime),
+    );
     final timeStr = DateFormat('h:mm a', 'es_CO').format(selectedDateTime);
 
     return BlocConsumer<SummaryBloc, SummaryState>(
@@ -94,8 +111,9 @@ class _ScheduleSummaryView extends StatelessWidget {
                 padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
                 decoration: BoxDecoration(
                   color: yellow,
-                  borderRadius:
-                      const BorderRadius.vertical(bottom: Radius.circular(16)),
+                  borderRadius: const BorderRadius.vertical(
+                    bottom: Radius.circular(16),
+                  ),
                 ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -103,7 +121,10 @@ class _ScheduleSummaryView extends StatelessWidget {
                     Expanded(
                       child: Text(
                         'Confirma tu cita',
-                        style: TextStyle(fontSize: 26, fontWeight: FontWeight.bold),
+                        style: TextStyle(
+                          fontSize: 26,
+                          fontWeight: FontWeight.bold,
+                        ),
                       ),
                     ),
                     SizedBox(width: 8),
@@ -124,17 +145,23 @@ class _ScheduleSummaryView extends StatelessWidget {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          const Text('Resumen de tu cita',
-                              style: TextStyle(
-                                  fontSize: 18, fontWeight: FontWeight.bold)),
+                          const Text(
+                            'Resumen de tu cita',
+                            style: TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           const SizedBox(height: 12),
 
                           // Servicios + total
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text('Servicios:',
-                                  style: TextStyle(fontWeight: FontWeight.w600)),
+                              const Text(
+                                'Servicios:',
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
                               Text(
                                 currencyFormatter.format(state.totalPrice),
                                 style: const TextStyle(
@@ -154,13 +181,17 @@ class _ScheduleSummaryView extends StatelessWidget {
                                   mainAxisAlignment:
                                       MainAxisAlignment.spaceBetween,
                                   children: [
-                                    Text(s.name,
-                                        style: const TextStyle(
-                                            color: Colors.black87)),
+                                    Text(
+                                      s.name,
+                                      style: const TextStyle(
+                                        color: Colors.black87,
+                                      ),
+                                    ),
                                     Text(
                                       currencyFormatter.format(s.price),
                                       style: const TextStyle(
-                                          color: Colors.black54),
+                                        color: Colors.black54,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -174,11 +205,16 @@ class _ScheduleSummaryView extends StatelessWidget {
                           Row(
                             mainAxisAlignment: MainAxisAlignment.spaceBetween,
                             children: [
-                              const Text('Duración total:',
-                                  style: TextStyle(fontWeight: FontWeight.w600)),
-                              Text('${state.totalDuration} min',
-                                  style: const TextStyle(
-                                      fontWeight: FontWeight.bold)),
+                              const Text(
+                                'Duración total:',
+                                style: TextStyle(fontWeight: FontWeight.w600),
+                              ),
+                              Text(
+                                '${state.totalDuration} min',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ],
                           ),
                           const SizedBox(height: 12),
@@ -203,14 +239,21 @@ class _ScheduleSummaryView extends StatelessWidget {
                     onPressed: () {
                       final newAppointment = Appointment(
                         id: DateTime.now().millisecondsSinceEpoch.toString(),
-                        serviceName: state.selectedServices.map((s) => s.name).join(', '),
+                        serviceName: state.selectedServices
+                            .map((s) => s.name)
+                            .join(', '),
                         dateTime: selectedDateTime,
                         barberName: state.barber.name,
                         location: state.location.name,
                         price: state.totalPrice,
                         status: 'Confirmada',
+                        barberId: selectedBarberId,
+                        locationId: int.tryParse(selectedLocationId) ?? 0,
+                        durationMinutes: state.totalDuration,
                       );
-                      context.read<SummaryBloc>().add(ConfirmAppointmentEvent(newAppointment));
+                      context.read<SummaryBloc>().add(
+                        ConfirmAppointmentEvent(newAppointment),
+                      );
                     },
                     style: ElevatedButton.styleFrom(
                       minimumSize: const Size(double.infinity, 50),
@@ -247,10 +290,7 @@ class _ScheduleSummaryView extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(color: Colors.black87),
-            ),
+            child: Text(value, style: const TextStyle(color: Colors.black87)),
           ),
         ],
       ),
