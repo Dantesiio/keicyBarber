@@ -7,6 +7,10 @@ class Appointment {
   final double price;
   final String status;
 
+  final String barberId;
+  final int locationId;
+  final int durationMinutes;
+
   Appointment({
     required this.id,
     required this.serviceName,
@@ -15,6 +19,9 @@ class Appointment {
     required this.location,
     required this.price,
     required this.status,
+    required this.barberId,
+    required this.locationId,
+    required this.durationMinutes,
   });
 
   Map<String, dynamic> toJson() {
@@ -64,14 +71,13 @@ class Appointment {
       location: locationName,
       price: price,
       status: statusSpanish,
+      barberId: json['barber_id']?.toString() ?? '',
+      locationId: json['location_id'] is int
+          ? json['location_id']
+          : int.tryParse(json['location_id']?.toString() ?? '0') ?? 0,
+      durationMinutes: json['total_duration_minutes'] ?? 30,
     );
   }
-
-  get barberId => null;
-
-  get locationId => null;
-
-  get durationMinutes => null;
 
   static String _mapStatusToSpanish(String status) {
     switch (status.toLowerCase()) {

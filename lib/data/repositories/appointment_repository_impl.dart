@@ -18,6 +18,9 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
             id,
             start_time,
             status,
+            barber_id,              
+            location_id,            
+            total_duration_minutes, 
             appointment_services(
               services(
                 name,
