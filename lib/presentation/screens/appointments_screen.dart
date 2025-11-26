@@ -44,50 +44,46 @@ class AppointmentsContent extends StatelessWidget {
         List<Appointment> filteredAppointments = [];
         if (state is AppointmentsLoadedState) {
           if (state.currentTab == 0) {
-            // Próximas: pendiente, confirmada, en proceso
             filteredAppointments = state.appointments
-                .where(
-                  (a) => a.status == 'Pendiente' ||
-                         a.status == 'Confirmada' ||
-                         a.status == 'En Proceso',
-                )
+                .where((a) =>
+                    a.status == 'Pendiente' ||
+                    a.status == 'Confirmada' ||
+                    a.status == 'En Proceso')
                 .toList();
           } else if (state.currentTab == 1) {
-            // Completadas
             filteredAppointments = state.appointments
                 .where((a) => a.status == 'Completada')
                 .toList();
           } else if (state.currentTab == 2) {
-            // Canceladas: incluye cancelada_cliente, cancelada_admin
             filteredAppointments = state.appointments
                 .where((a) => a.status == 'Cancelada')
                 .toList();
           }
         }
 
-        // Contar citas por estado
         int proximasCount = 0;
         int completadasCount = 0;
         int canceladasCount = 0;
 
         if (state is AppointmentsLoadedState) {
           proximasCount = state.appointments
-              .where((a) => a.status == 'Pendiente' ||
-                           a.status == 'Confirmada' ||
-                           a.status == 'En Proceso')
+              .where((a) =>
+                  a.status == 'Pendiente' ||
+                  a.status == 'Confirmada' ||
+                  a.status == 'En Proceso')
               .length;
-          completadasCount = state.appointments
-              .where((a) => a.status == 'Completada')
-              .length;
-          canceladasCount = state.appointments
-              .where((a) => a.status == 'Cancelada')
-              .length;
+
+          completadasCount =
+              state.appointments.where((a) => a.status == 'Completada').length;
+
+          canceladasCount =
+              state.appointments.where((a) => a.status == 'Cancelada').length;
         }
 
         return Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
+            // HEADER
             Container(
               width: double.infinity,
               padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
@@ -112,33 +108,32 @@ class AppointmentsContent extends StatelessWidget {
                 ],
               ),
             ),
+
             const SizedBox(height: 16),
-            // Contadores
+
+            // CONTADORES
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
                 children: [
                   _CounterWidget(
-                    count: proximasCount,
-                    label: 'Próximas',
-                    color: yellow,
-                  ),
+                      count: proximasCount, label: 'Próximas', color: yellow),
                   _CounterWidget(
-                    count: completadasCount,
-                    label: 'Completadas',
-                    color: Colors.green,
-                  ),
+                      count: completadasCount,
+                      label: 'Completadas',
+                      color: Colors.green),
                   _CounterWidget(
-                    count: canceladasCount,
-                    label: 'Canceladas',
-                    color: Colors.red,
-                  ),
+                      count: canceladasCount,
+                      label: 'Canceladas',
+                      color: Colors.red),
                 ],
               ),
             ),
+
             const SizedBox(height: 16),
-            // Tabs
+
+            // TABS
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: SingleChildScrollView(
@@ -149,38 +144,34 @@ class AppointmentsContent extends StatelessWidget {
                       label: 'Próximas',
                       isActive: state.currentTab == 0,
                       badge: proximasCount > 0 ? '$proximasCount' : null,
-                      onTap: () {
-                        context.read<AppointmentsBloc>().add(
-                          ChangeTabEvent(tabIndex: 0),
-                        );
-                      },
+                      onTap: () => context
+                          .read<AppointmentsBloc>()
+                          .add(ChangeTabEvent(tabIndex: 0)),
                     ),
                     const SizedBox(width: 12),
                     _TabButton(
                       label: 'Completadas',
                       isActive: state.currentTab == 1,
-                      onTap: () {
-                        context.read<AppointmentsBloc>().add(
-                          ChangeTabEvent(tabIndex: 1),
-                        );
-                      },
+                      onTap: () => context
+                          .read<AppointmentsBloc>()
+                          .add(ChangeTabEvent(tabIndex: 1)),
                     ),
                     const SizedBox(width: 12),
                     _TabButton(
                       label: 'Canceladas',
                       isActive: state.currentTab == 2,
-                      onTap: () {
-                        context.read<AppointmentsBloc>().add(
-                          ChangeTabEvent(tabIndex: 2),
-                        );
-                      },
+                      onTap: () => context
+                          .read<AppointmentsBloc>()
+                          .add(ChangeTabEvent(tabIndex: 2)),
                     ),
                   ],
                 ),
               ),
             ),
+
             const SizedBox(height: 16),
-            // Lista de citas
+
+            // LISTA
             Expanded(
               child: Builder(
                 builder: (context) {
@@ -192,18 +183,19 @@ class AppointmentsContent extends StatelessWidget {
                     if (filteredAppointments.isEmpty) {
                       return _EmptyState(currentTab: state.currentTab);
                     }
+
                     return ListView.builder(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       itemCount: filteredAppointments.length,
                       itemBuilder: (context, index) {
-                        final appointment = filteredAppointments[index];
                         return _AppointmentCard(
-                          appointment: appointment,
+                          appointment: filteredAppointments[index],
                           currentTab: state.currentTab,
                         );
                       },
                     );
                   }
+
                   return const SizedBox.shrink();
                 },
               ),
@@ -286,7 +278,8 @@ class _TabButton extends StatelessWidget {
             if (badge != null) ...[
               const SizedBox(width: 6),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                padding:
+                    const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                 decoration: BoxDecoration(
                   color: const Color(0xFFF2B705),
                   borderRadius: BorderRadius.circular(10),
@@ -312,7 +305,10 @@ class _AppointmentCard extends StatelessWidget {
   final Appointment appointment;
   final int currentTab;
 
-  const _AppointmentCard({required this.appointment, required this.currentTab});
+  const _AppointmentCard({
+    required this.appointment,
+    required this.currentTab,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -340,6 +336,7 @@ class _AppointmentCard extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
+            // TITLE + STATUS
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -353,10 +350,8 @@ class _AppointmentCard extends StatelessWidget {
                   ),
                 ),
                 Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 12,
-                    vertical: 6,
-                  ),
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: statusColor,
                     borderRadius: BorderRadius.circular(20),
@@ -371,7 +366,10 @@ class _AppointmentCard extends StatelessWidget {
                 ),
               ],
             ),
+
             const SizedBox(height: 8),
+
+            // PRICE
             Text(
               currencyFormatter.format(appointment.price),
               style: TextStyle(
@@ -380,7 +378,10 @@ class _AppointmentCard extends StatelessWidget {
                 fontSize: 20,
               ),
             ),
+
             const SizedBox(height: 12),
+
+            // DATE + TIME
             Row(
               children: [
                 const Icon(Icons.calendar_today_outlined, size: 16),
@@ -392,7 +393,10 @@ class _AppointmentCard extends StatelessWidget {
                 Text(timeFormatter.format(appointment.dateTime)),
               ],
             ),
+
             const SizedBox(height: 8),
+
+            // BARBER + LOCATION
             Row(
               children: [
                 const Icon(Icons.person_outline, size: 16),
@@ -404,25 +408,21 @@ class _AppointmentCard extends StatelessWidget {
                 Text(appointment.location),
               ],
             ),
+
             if (currentTab == 0) ...[
               const SizedBox(height: 12),
               Row(
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () {
-                        // TODO: Implementar reagendar
-                      },
+                      onPressed: () {},
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: Colors.black),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(8),
                         ),
                       ),
-                      child: const Text(
-                        'Reagendar',
-                        style: TextStyle(color: Colors.black),
-                      ),
+                      child: const Text('Reagendar'),
                     ),
                   ),
                   const SizedBox(width: 12),
@@ -452,6 +452,7 @@ class _AppointmentCard extends StatelessWidget {
 
   void _showCancelDialog(BuildContext context, String appointmentId) {
     final yellow = const Color(0xFFF2B705);
+
     showDialog(
       context: context,
       builder: (BuildContext dialogContext) {
@@ -500,10 +501,10 @@ class _AppointmentCard extends StatelessWidget {
                         onPressed: () {
                           Navigator.of(dialogContext).pop();
                           context.read<AppointmentsBloc>().add(
-                            CancelAppointmentEvent(
-                              appointmentId: appointmentId,
-                            ),
-                          );
+                                CancelAppointmentEvent(
+                                  appointmentId: appointmentId,
+                                ),
+                              );
                         },
                         style: ElevatedButton.styleFrom(
                           backgroundColor: yellow,

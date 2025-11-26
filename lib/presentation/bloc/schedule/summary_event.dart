@@ -7,7 +7,11 @@ class LoadSummaryDetails extends SummaryEvent {
   final String locationId;
   final String barberId;
 
-  LoadSummaryDetails({required this.serviceIds, required this.locationId, required this.barberId});
+  LoadSummaryDetails({
+    required this.serviceIds,
+    required this.locationId,
+    required this.barberId,
+  });
 }
 
 class ConfirmAppointmentEvent extends SummaryEvent {

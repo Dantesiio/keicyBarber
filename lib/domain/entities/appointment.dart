@@ -28,14 +28,21 @@ class Appointment {
     String serviceName = 'Sin servicio';
     double price = 0;
 
-    if (json['appointment_services'] != null &&
-        (json['appointment_services'] as List).isNotEmpty) {
-      final serviceData = (json['appointment_services'] as List)[0];
-      if (serviceData['services'] != null) {
-        serviceName =
-            serviceData['services']['name'] as String? ?? 'Sin servicio';
-        final priceCents = serviceData['services']['price_cents'] as int? ?? 0;
-        price = priceCents * 1;
+    if (json['appointment_services'] != null && (json['appointment_services'] as List).isNotEmpty) {
+      final items = (json['appointment_services'] as List);
+      final names = <String>[];
+      for (final s in items) {
+        if (s['services'] != null) {
+          final data = s['services'];
+          final name = data['name'] as String?;
+          if (name != null) names.add(name);
+          final priceCents = data['price_cents'] as int? ?? 0;
+          price += priceCents * 1;
+        }
+      }
+
+      if (names.isNotEmpty) {
+        serviceName = names.join(", ");
       }
     }
 
@@ -59,7 +66,7 @@ class Appointment {
     return Appointment(
       id: json['id'].toString(),
       serviceName: serviceName,
-      dateTime: DateTime.parse(json['start_time'] as String),
+      dateTime: DateTime.parse(json['start_time'] as String).toLocal(),
       barberName: barberName,
       location: locationName,
       price: price,

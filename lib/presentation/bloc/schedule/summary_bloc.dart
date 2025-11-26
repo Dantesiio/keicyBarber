@@ -33,12 +33,10 @@ class SummaryBloc extends Bloc<SummaryEvent, SummaryState> {
   ) async {
     emit(SummaryLoading());
     try {
-      // Obtener todos los datos en paralelo
       final futureServices = serviceRepository.getServices();
       final futureLocations = locationRepository.getLocations();
-      final futureBarbers = barberRepository.getBarbersByLocation(
-        event.locationId,
-      );
+      final futureBarbers =
+          barberRepository.getBarbersByLocation(event.locationId);
 
       final results = await Future.wait([
         futureServices,
@@ -50,18 +48,20 @@ class SummaryBloc extends Bloc<SummaryEvent, SummaryState> {
       final allLocations = results[1] as List<Location>;
       final allBarbers = results[2] as List<Barber>;
 
-      // Filtrar para obtener los elementos seleccionados
-      final selectedServices = allServices
-          .where((s) => event.serviceIds.contains(s.id))
-          .toList();
-      final location = allLocations.firstWhere((l) => l.id == event.locationId);
+      final selectedServices =
+          allServices.where((s) => event.serviceIds.contains(s.id)).toList();
+
+      final location =
+          allLocations.firstWhere((l) => l.id == event.locationId);
+
       final barber = allBarbers.firstWhere((b) => b.id == event.barberId);
 
-      final totalPrice = selectedServices.fold(
+      final totalPrice = selectedServices.fold<double>(
         0.0,
         (sum, service) => sum + service.price,
       );
-      final totalDuration = selectedServices.fold(
+
+      final totalDuration = selectedServices.fold<int>(
         0,
         (sum, service) => sum + service.durationMinutes,
       );
@@ -86,6 +86,7 @@ class SummaryBloc extends Bloc<SummaryEvent, SummaryState> {
   ) async {
     try {
       final current = state;
+
       if (current is! SummaryLoaded) {
         emit(SummaryError('No hay datos cargados para confirmar la cita.'));
         return;
@@ -93,29 +94,48 @@ class SummaryBloc extends Bloc<SummaryEvent, SummaryState> {
 
       emit(SummaryConfirmationLoading());
 
-      final selectedServices = current.selectedServices;
+      final appointmentUTC = Appointment(
+        id: event.appointment.id,
+        serviceName: event.appointment.serviceName,
+        dateTime: event.appointment.dateTime,
+        barberName: event.appointment.barberName,
+        location: event.appointment.location,
+        price: event.appointment.price,
+        status: event.appointment.status,
+      );
 
-      final totalDurationMinutes = selectedServices.fold<int>(
+      final userAppointments =
+          await appointmentRepository.getAppointments();
+
+      final conflict = userAppointments.any((appt) {
+        return appt.dateTime.toLocal()
+            .isAtSameMomentAs(event.appointment.dateTime.toLocal());
+      });
+
+      if (conflict) {
+        emit(SummaryConflict(
+            "Ya tienes una cita agendada exactamente a esa hora."));
+        return;
+      }
+
+      final totalDurationMinutes = current.selectedServices.fold<int>(
         0,
         (sum, s) => sum + s.durationMinutes,
       );
 
-      // We store prices in the domain as currency units (pesos, double).
-      // When creating the appointment we need estimated price in cents,
-      // so multiply by 100 and convert to int.
-      final estimatedPriceCents = selectedServices.fold<int>(
+      final estimatedPriceCents = current.selectedServices.fold<int>(
         0,
         (sum, s) => sum + (s.price * 100).toInt(),
       );
 
-      final serviceIds = selectedServices
+      final serviceIds = current.selectedServices
           .map((s) => int.tryParse(s.id))
           .where((v) => v != null)
           .cast<int>()
           .toList();
 
       await appointmentRepository.createAppointment(
-        appointment: event.appointment,
+        appointment: appointmentUTC,
         serviceIds: serviceIds,
         barberId: current.barber.id,
         locationId: int.parse(current.location.id),

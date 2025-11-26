@@ -27,5 +27,11 @@ class SummaryError extends SummaryState {
   SummaryError(this.message);
 }
 
-class SummaryConfirmationSuccess extends SummaryState {}
+class SummaryConflict extends SummaryState {
+  final String message;
+  SummaryConflict(this.message);
+}
+
 class SummaryConfirmationLoading extends SummaryState {}
+
+class SummaryConfirmationSuccess extends SummaryState {}
