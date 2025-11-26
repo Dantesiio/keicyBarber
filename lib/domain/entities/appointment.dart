@@ -67,6 +67,12 @@ class Appointment {
     );
   }
 
+  get barberId => null;
+
+  get locationId => null;
+
+  get durationMinutes => null;
+
   static String _mapStatusToSpanish(String status) {
     switch (status.toLowerCase()) {
       case 'confirmada':
