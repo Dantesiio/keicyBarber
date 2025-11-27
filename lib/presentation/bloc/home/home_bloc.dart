@@ -15,6 +15,7 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     required this.getNextAppointment,
   }) : super(HomeInitial()) {
     on<LoadHome>(_onLoadHome);
+    on<RefreshNextAppointment>(_onRefreshNextAppointment);
     on<NavigateToService>(_onNavigateToService);
   }
 
@@ -29,6 +30,31 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
       ));
     } catch (e) {
       emit(HomeError('Error al cargar servicios'));
+    }
+  }
+
+  void _onRefreshNextAppointment(
+    RefreshNextAppointment event,
+    Emitter<HomeState> emit,
+  ) async {
+    final currentState = state;
+    if (currentState is HomeLoaded) {
+      try {
+        final nextAppointment = await _fetchNextAppointment();
+        emit(HomeLoaded(
+          services: currentState.services,
+          nextAppointment: nextAppointment,
+        ));
+      } catch (e, stackTrace) {
+        developer.log(
+          'Error al actualizar la próxima cita',
+          name: 'HomeBloc',
+          error: e,
+          stackTrace: stackTrace,
+        );
+        // Mantener el estado actual si hay error
+        emit(currentState);
+      }
     }
   }
 

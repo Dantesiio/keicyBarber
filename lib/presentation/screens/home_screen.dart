@@ -5,9 +5,11 @@ import 'package:keicybarber/presentation/bloc/navigation/navigation_cubit.dart';
 import '../../domain/entities/appointment.dart';
 import '../../domain/entities/service.dart';
 import '../bloc/home/home_bloc.dart';
+import '../bloc/home/home_event.dart';
 import '../bloc/home/home_state.dart';
 import '../bloc/profile/profile_bloc.dart';
 import '../bloc/profile/profile_state.dart';
+import '../bloc/appointments/appointments_bloc.dart' as appointments;
 
 class HomeScreen extends StatelessWidget {
   const HomeScreen({super.key});
@@ -15,7 +17,15 @@ class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final yellow = const Color(0xFFF2B705);
-    return BlocBuilder<HomeBloc, HomeState>(
+    return BlocListener<appointments.AppointmentsBloc, appointments.AppointmentsState>(
+      listener: (context, appointmentsState) {
+        // Cuando se actualiza la lista de citas (por ejemplo, después de cancelar),
+        // recargamos la próxima cita en el home
+        if (appointmentsState is appointments.AppointmentsLoadedState) {
+          context.read<HomeBloc>().add(RefreshNextAppointment());
+        }
+      },
+      child: BlocBuilder<HomeBloc, HomeState>(
       builder: (context, state) {
         Widget body;
         if (state is HomeLoaded) {
@@ -68,6 +78,7 @@ class HomeScreen extends StatelessWidget {
           ),
         );
       },
+      ),
     );
   }
 

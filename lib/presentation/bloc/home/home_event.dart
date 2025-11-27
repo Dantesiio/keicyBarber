@@ -9,6 +9,8 @@ abstract class HomeEvent extends Equatable {
 
 class LoadHome extends HomeEvent {}
 
+class RefreshNextAppointment extends HomeEvent {}
+
 class NavigateToService extends HomeEvent {
   final String serviceId;
 
