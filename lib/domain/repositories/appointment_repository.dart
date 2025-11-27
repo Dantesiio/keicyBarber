@@ -22,4 +22,6 @@ abstract class AppointmentRepository {
   });
   
   Future<void> cancelAppointment(String id);
+
+  Future<Appointment?> getNextAppointment();
 }

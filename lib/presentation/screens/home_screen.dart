@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:intl/intl.dart';
 import 'package:keicybarber/presentation/bloc/navigation/navigation_cubit.dart';
+import '../../domain/entities/appointment.dart';
 import '../bloc/home/home_bloc.dart';
 import '../bloc/home/home_state.dart';
 import '../bloc/profile/profile_bloc.dart';
@@ -16,7 +18,7 @@ class HomeScreen extends StatelessWidget {
       builder: (context, state) {
         Widget body;
         if (state is HomeLoaded) {
-          body = _buildHomeContent(context, state.services);
+          body = _buildHomeContent(context, state);
         } else if (state is HomeError) {
           body = Center(child: Text('Error: ${state.message}'));
         } else {
@@ -68,54 +70,16 @@ class HomeScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildHomeContent(BuildContext context, List<String> services) {
+  Widget _buildHomeContent(BuildContext context, HomeLoaded state) {
     final yellow = const Color(0xFFF2B705);
+    final services = state.services;
     return Padding(
       padding: const EdgeInsets.all(16.0),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(
-                child: Card(
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(12.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: const [
-                        Text(
-                          'Próxima Cita',
-                          style: TextStyle(fontWeight: FontWeight.w600),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          'Corte Y Barba',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        SizedBox(height: 8),
-                        Text(
-                          r'$45,000',
-                          style: TextStyle(
-                            color: Color(0xFFF2B705),
-                            fontSize: 20,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
+          _buildNextAppointmentCard(context, state.nextAppointment),
           const SizedBox(height: 12),
           Card(
             shape: RoundedRectangleBorder(
@@ -200,6 +164,110 @@ class HomeScreen extends StatelessWidget {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildNextAppointmentCard(
+    BuildContext context,
+    Appointment? nextAppointment,
+  ) {
+    final yellow = const Color(0xFFF2B705);
+    final currencyFormatter = NumberFormat.currency(
+      locale: 'es_CO',
+      symbol: r'$',
+      decimalDigits: 0,
+    );
+    final dateFormatter = DateFormat("EEEE d 'de' MMMM", 'es_CO');
+    final timeFormatter = DateFormat('h:mm a', 'es_CO');
+
+    String formatDate(DateTime date) {
+      final formatted = dateFormatter.format(date);
+      if (formatted.isEmpty) return formatted;
+      return formatted[0].toUpperCase() + formatted.substring(1);
+    }
+
+    return Card(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        padding: const EdgeInsets.all(12.0),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Próxima Cita',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
+            const SizedBox(height: 8),
+            if (nextAppointment == null) ...[
+              const Text(
+                'Aún no tienes citas programadas.',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+              ),
+              const SizedBox(height: 4),
+              const Text(
+                'Agenda tu próxima experiencia para verla aquí.',
+              ),
+              const SizedBox(height: 12),
+              OutlinedButton(
+                onPressed: () {
+                  context.read<NavigationCubit>().setPage(1);
+                },
+                child: const Text('Agendar ahora'),
+              ),
+            ] else ...[
+              Text(
+                nextAppointment.serviceName,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Icons.calendar_today_outlined, size: 16),
+                  const SizedBox(width: 6),
+                  Text(formatDate(nextAppointment.dateTime)),
+                  const SizedBox(width: 16),
+                  const Icon(Icons.access_time, size: 16),
+                  const SizedBox(width: 6),
+                  Text(timeFormatter.format(nextAppointment.dateTime)),
+                ],
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  const Icon(Icons.person_outline, size: 16),
+                  const SizedBox(width: 6),
+                  Expanded(child: Text(nextAppointment.barberName)),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Row(
+                children: [
+                  const Icon(Icons.location_on_outlined, size: 16),
+                  const SizedBox(width: 6),
+                  Expanded(child: Text(nextAppointment.location)),
+                ],
+              ),
+              const SizedBox(height: 12),
+              Align(
+                alignment: Alignment.centerRight,
+                child: Text(
+                  currencyFormatter.format(nextAppointment.price),
+                  style: TextStyle(
+                    color: yellow,
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ],
+        ),
       ),
     );
   }

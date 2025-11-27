@@ -29,6 +29,7 @@ import 'presentation/bloc/profile/profile_bloc.dart';
 import 'presentation/bloc/profile/profile_event.dart';
 
 import 'domain/usecases/get_services.dart';
+import 'domain/usecases/get_next_appointment.dart';
 import 'domain/usecases/login_user.dart';
 import 'domain/usecases/register_user.dart';
 import 'domain/usecases/reset_password.dart';
@@ -142,6 +143,7 @@ class _MyAppState extends State<MyApp> {
         LocationRepositoryImpl(locationDataSource);
 
     final getServicesUseCase = GetServices(serviceRepository);
+    final getNextAppointmentUseCase = GetNextAppointment(appointmentRepository);
 
     final registerUserUseCase = RegisterUser(authRepository);
     final loginUserUseCase = LoginUser(authRepository);
@@ -154,8 +156,10 @@ class _MyAppState extends State<MyApp> {
     return MultiBlocProvider(
       providers: [
         BlocProvider<HomeBloc>(
-          create: (context) =>
-              HomeBloc(getServices: getServicesUseCase)..add(LoadHome()),
+          create: (context) => HomeBloc(
+            getServices: getServicesUseCase,
+            getNextAppointment: getNextAppointmentUseCase,
+          )..add(LoadHome()),
         ),
 
         BlocProvider<NavigationCubit>(

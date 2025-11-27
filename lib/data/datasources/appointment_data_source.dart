@@ -88,4 +88,40 @@ class AppointmentDataSource {
         .gte('start_time', from)
         .lt('start_time', to);
   }
+
+  Future<Map<String, dynamic>?> fetchNextAppointment(String uid) async {
+    final nowUtc = DateTime.now().toUtc().toIso8601String();
+
+    return await _sb
+        .from('appointments')
+        .select('''
+          id,
+          start_time,
+          end_time,
+          status,
+          estimated_price_cents,
+          appointment_services(
+            services(
+              name,
+              price_cents
+            )
+          ),
+          barbers(
+            profiles(
+              first_name,
+              last_name
+            )
+          ),
+          locations(
+            name,
+            address
+          )
+        ''')
+        .eq('client_id', uid)
+        .eq('status', 'programada')
+        .gte('start_time', nowUtc)
+        .order('start_time', ascending: true)
+        .limit(1)
+        .maybeSingle();
+  }
 }

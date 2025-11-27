@@ -234,4 +234,21 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
 
     return 'BK-$y$m$d-$rand';
   }
+
+  @override
+  Future<Appointment?> getNextAppointment() async {
+    final uid = Supabase.instance.client.auth.currentUser?.id;
+    if (uid == null) return null;
+
+    try {
+      final row = await dataSource.fetchNextAppointment(uid);
+      if (row == null) return null;
+      return Appointment.fromJson(row);
+    } on PostgrestException catch (_) {
+      throw AppException("Error obteniendo la próxima cita", code: "DB_FETCH");
+    } catch (e) {
+      if (e is AppException) rethrow;
+      throw AppException("Error inesperado obteniendo la próxima cita");
+    }
+  }
 }
