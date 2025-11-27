@@ -15,7 +15,14 @@ class WelcomeScreen extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.stretch,
             children: [
               const Spacer(),
-              const Icon(Icons.content_cut, size: 120, color: Color(0xFFF2B705)),
+              Center(
+                child: Image.asset(
+                  'images/image.png',
+                  width: 120,
+                  height: 120,
+                  fit: BoxFit.contain,
+                ),
+              ),
               const SizedBox(height: 24),
               const Text(
                 'Peluquería Keicy',

@@ -70,10 +70,13 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: CircleAvatar(
                         radius: 50,
                         backgroundColor: yellow.withOpacity(0.2),
-                        child: const Icon(
-                          Icons.content_cut,
-                          size: 50,
-                          color: Color(0xFFF2B705),
+                        child: ClipOval(
+                          child: Image.asset(
+                            'images/image.png',
+                            width: 100,
+                            height: 100,
+                            fit: BoxFit.cover,
+                          ),
                         ),
                       ),
                     ),

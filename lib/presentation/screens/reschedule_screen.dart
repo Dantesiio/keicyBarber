@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:keicybarber/data/datasources/appointment_data_source.dart';
 import 'package:keicybarber/data/repositories/appointment_repository_impl.dart';
 import 'package:keicybarber/domain/entities/appointment.dart';
 import 'package:keicybarber/presentation/bloc/reschedule/reschedule_bloc.dart';
@@ -15,8 +17,11 @@ class RescheduleScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (context) =>
-          RescheduleBloc(appointmentRepository: AppointmentRepositoryImpl()),
+      create: (context) => RescheduleBloc(
+        appointmentRepository: AppointmentRepositoryImpl(
+          AppointmentDataSource(Supabase.instance.client),
+        ),
+      ),
       child: Scaffold(
         appBar: AppBar(
           title: const Text('Reagendar Cita'),

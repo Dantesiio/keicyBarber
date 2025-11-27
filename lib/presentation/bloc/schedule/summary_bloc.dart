@@ -102,6 +102,9 @@ class SummaryBloc extends Bloc<SummaryEvent, SummaryState> {
         location: event.appointment.location,
         price: event.appointment.price,
         status: event.appointment.status,
+        barberId: current.barber.id,
+        locationId: int.parse(current.location.id),
+        durationMinutes: current.totalDuration,
       );
 
       final userAppointments =
