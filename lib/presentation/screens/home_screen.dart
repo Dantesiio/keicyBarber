@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:keicybarber/presentation/bloc/navigation/navigation_cubit.dart';
 import '../../domain/entities/appointment.dart';
+import '../../domain/entities/service.dart';
 import '../bloc/home/home_bloc.dart';
 import '../bloc/home/home_state.dart';
 import '../bloc/profile/profile_bloc.dart';
@@ -118,14 +119,19 @@ class HomeScreen extends StatelessWidget {
                     children: [
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            _showServicesCatalog(context, services);
+                          },
                           child: const Text('Ver Servicios'),
                         ),
                       ),
                       const SizedBox(width: 12),
                       Expanded(
                         child: OutlinedButton(
-                          onPressed: () {},
+                          onPressed: () {
+                            // Navega a la pestaña "Citas" (índice 2 en el BottomNavigationBar)
+                            context.read<NavigationCubit>().setPage(2);
+                          },
                           child: const Text('Mi Historial'),
                         ),
                       ),
@@ -145,6 +151,7 @@ class HomeScreen extends StatelessWidget {
             child: ListView.builder(
               itemCount: services.length,
               itemBuilder: (context, index) {
+                final service = services[index];
                 return Card(
                   margin: const EdgeInsets.symmetric(vertical: 8),
                   shape: RoundedRectangleBorder(
@@ -152,12 +159,37 @@ class HomeScreen extends StatelessWidget {
                   ),
                   child: ListTile(
                     title: Text(
-                      services[index],
+                      service.name,
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
-                    subtitle: const Text('Incluye: Corte y masaje'),
-                    trailing: const Icon(Icons.add),
-                    onTap: () {},
+                    subtitle: Text(
+                      service.description.isNotEmpty
+                          ? service.description
+                          : 'Duración: ${service.durationMinutes} min',
+                    ),
+                    trailing: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          NumberFormat.currency(
+                            locale: 'es_CO',
+                            symbol: r'$',
+                            decimalDigits: 0,
+                          ).format(service.price),
+                          style: const TextStyle(
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        Text(
+                          '${service.durationMinutes} min',
+                          style: const TextStyle(fontSize: 12),
+                        ),
+                      ],
+                    ),
+                    onTap: () {
+                      // En el futuro aquí podrías iniciar el flujo de agendamiento para este servicio.
+                    },
                   ),
                 );
               },
@@ -269,6 +301,117 @@ class HomeScreen extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  void _showServicesCatalog(BuildContext context, List<Service> services) {
+    final currencyFormatter = NumberFormat.currency(
+      locale: 'es_CO',
+      symbol: r'$',
+      decimalDigits: 0,
+    );
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (context) {
+        return DraggableScrollableSheet(
+          expand: false,
+          initialChildSize: 0.7,
+          maxChildSize: 0.9,
+          minChildSize: 0.4,
+          builder: (context, scrollController) {
+            return Padding(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        'Catálogo de Servicios',
+                        style: TextStyle(
+                          fontSize: 18,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close),
+                        onPressed: () => Navigator.of(context).pop(),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
+                  Expanded(
+                    child: ListView.builder(
+                      controller: scrollController,
+                      itemCount: services.length,
+                      itemBuilder: (context, index) {
+                        final service = services[index];
+                        return Card(
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: Padding(
+                            padding: const EdgeInsets.all(12.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Row(
+                                  mainAxisAlignment:
+                                      MainAxisAlignment.spaceBetween,
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: Text(
+                                        service.name,
+                                        style: const TextStyle(
+                                          fontSize: 16,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Text(
+                                      currencyFormatter.format(service.price),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                const SizedBox(height: 6),
+                                if (service.description.isNotEmpty)
+                                  Text(
+                                    service.description,
+                                    style: const TextStyle(fontSize: 13),
+                                  ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  'Duración aproximada: ${service.durationMinutes} min',
+                                  style: const TextStyle(
+                                    fontSize: 12,
+                                    color: Colors.black54,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

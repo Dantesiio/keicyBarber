@@ -1,5 +1,6 @@
 import 'package:equatable/equatable.dart';
 import '../../../../domain/entities/appointment.dart';
+import '../../../../domain/entities/service.dart';
 
 abstract class HomeState extends Equatable {
   const HomeState();
@@ -13,11 +14,11 @@ class HomeInitial extends HomeState {}
 class HomeLoading extends HomeState {}
 
 class HomeLoaded extends HomeState {
-  final List<String> services;
+  final List<Service> services;
   final Appointment? nextAppointment;
 
-  const HomeLoaded(
-    this.services, {
+  const HomeLoaded({
+    required this.services,
     this.nextAppointment,
   });
 

@@ -22,10 +22,9 @@ class HomeBloc extends Bloc<HomeEvent, HomeState> {
     emit(HomeLoading());
     try {
       final services = await getServices();
-      final serviceNames = services.map((s) => s.name).toList();
       final nextAppointment = await _fetchNextAppointment();
       emit(HomeLoaded(
-        serviceNames,
+        services: services,
         nextAppointment: nextAppointment,
       ));
     } catch (e) {
