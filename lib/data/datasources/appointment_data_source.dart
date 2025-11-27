@@ -99,6 +99,9 @@ class AppointmentDataSource {
           start_time,
           end_time,
           status,
+          barber_id,
+          location_id,
+          total_duration_minutes,
           estimated_price_cents,
           appointment_services(
             services(
@@ -118,7 +121,7 @@ class AppointmentDataSource {
           )
         ''')
         .eq('client_id', uid)
-        .eq('status', 'programada')
+        .inFilter('status', ['pendiente', 'confirmada', 'en_proceso'])
         .gte('start_time', nowUtc)
         .order('start_time', ascending: true)
         .limit(1)
