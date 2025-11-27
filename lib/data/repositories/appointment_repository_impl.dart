@@ -4,12 +4,14 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../core/errors/app_exception.dart';
 import '../../domain/entities/appointment.dart';
 import '../../domain/repositories/appointment_repository.dart';
+import '../../domain/repositories/email_repository.dart';
 import '../datasources/appointment_data_source.dart';
 
 class AppointmentRepositoryImpl implements AppointmentRepository {
   final AppointmentDataSource dataSource;
+  final EmailRepository? emailRepository;
 
-  AppointmentRepositoryImpl(this.dataSource);
+  AppointmentRepositoryImpl(this.dataSource, {this.emailRepository});
 
   @override
   Future<List<Appointment>> getAppointments() async {
@@ -154,6 +156,65 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
             .toList();
 
         await dataSource.insertAppointmentServices(rows);
+      }
+
+      // Enviar correo de notificación si el repositorio está disponible
+      if (emailRepository != null) {
+        try {
+          final userEmail = Supabase.instance.client.auth.currentUser?.email;
+          if (userEmail != null) {
+            // Obtener nombre del usuario desde el perfil
+            final profileData = await Supabase.instance.client
+                .from('profiles')
+                .select('first_name, last_name')
+                .eq('id', uid)
+                .maybeSingle();
+
+            final firstName = profileData?['first_name'] as String? ?? 'Usuario';
+            final lastName = profileData?['last_name'] as String? ?? '';
+            final userName = '$firstName $lastName'.trim();
+
+            // Obtener la cita completa para el correo
+            final appointmentData = await Supabase.instance.client
+                .from('appointments')
+                .select('''
+                  id,
+                  start_time,
+                  status,
+                  barber_id,
+                  location_id,
+                  total_duration_minutes,
+                  appointment_services(
+                    services(
+                      name,
+                      price_cents
+                    )
+                  ),
+                  barbers(
+                    profiles(
+                      first_name,
+                      last_name
+                    )
+                  ),
+                  locations(
+                    name
+                  )
+                ''')
+                .eq('id', apptId)
+                .single();
+
+            final appointmentForEmail = Appointment.fromJson(appointmentData);
+
+            await emailRepository!.sendAppointmentNotification(
+              recipientEmail: userEmail,
+              recipientName: userName,
+              appointment: appointmentForEmail,
+            );
+          }
+        } catch (e) {
+          // No fallar la creación de la cita si el correo falla
+          print('⚠️ Error enviando correo de notificación: $e');
+        }
       }
     } on AppException {
       rethrow;

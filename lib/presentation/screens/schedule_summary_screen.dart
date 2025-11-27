@@ -7,11 +7,13 @@ import 'package:keicybarber/data/repositories/appointment_repository_impl.dart';
 import 'package:keicybarber/data/repositories/barber_repository_impl.dart';
 import 'package:keicybarber/data/repositories/location_repository_impl.dart';
 import 'package:keicybarber/data/repositories/service_repository_impl.dart';
+import 'package:keicybarber/data/repositories/email_repository_impl.dart';
 
 import 'package:keicybarber/data/datasources/appointment_data_source.dart';
 import 'package:keicybarber/data/datasources/barber_data_source.dart';
 import 'package:keicybarber/data/datasources/location_data_source.dart';
 import 'package:keicybarber/data/datasources/service_data_source.dart';
+import 'package:keicybarber/data/datasources/email_data_source.dart';
 
 import 'package:keicybarber/domain/entities/appointment.dart';
 
@@ -44,7 +46,10 @@ class ScheduleSummaryScreen extends StatelessWidget {
         serviceRepository: ServiceRepositoryImpl(ServiceDataSource(client)),
         locationRepository: LocationRepositoryImpl(LocationDataSource(client)),
         barberRepository: BarberRepositoryImpl(BarberDataSource(client)),
-        appointmentRepository: AppointmentRepositoryImpl(AppointmentDataSource(client)),
+        appointmentRepository: AppointmentRepositoryImpl(
+          AppointmentDataSource(client),
+          emailRepository: EmailRepositoryImpl(EmailDataSourceImpl()),
+        ),
       )..add(
           LoadSummaryDetails(
             serviceIds: selectedServiceIds,

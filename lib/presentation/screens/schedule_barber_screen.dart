@@ -5,8 +5,10 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:keicybarber/data/repositories/barber_repository_impl.dart';
 import 'package:keicybarber/data/repositories/appointment_repository_impl.dart';
+import 'package:keicybarber/data/repositories/email_repository_impl.dart';
 import 'package:keicybarber/data/datasources/barber_data_source.dart';
 import 'package:keicybarber/data/datasources/appointment_data_source.dart';
+import 'package:keicybarber/data/datasources/email_data_source.dart';
 
 import 'package:keicybarber/presentation/bloc/schedule/barber_bloc.dart';
 import 'package:keicybarber/presentation/screens/schedule_summary_screen.dart';
@@ -33,6 +35,7 @@ class ScheduleBarberScreen extends StatelessWidget {
 
     final appointmentRepository = AppointmentRepositoryImpl(
       AppointmentDataSource(client),
+      emailRepository: EmailRepositoryImpl(EmailDataSourceImpl()),
     );
 
     return BlocProvider(

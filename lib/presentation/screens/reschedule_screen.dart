@@ -3,7 +3,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:keicybarber/data/datasources/appointment_data_source.dart';
+import 'package:keicybarber/data/datasources/email_data_source.dart';
 import 'package:keicybarber/data/repositories/appointment_repository_impl.dart';
+import 'package:keicybarber/data/repositories/email_repository_impl.dart';
 import 'package:keicybarber/domain/entities/appointment.dart';
 import 'package:keicybarber/presentation/bloc/reschedule/reschedule_bloc.dart';
 import 'package:keicybarber/presentation/bloc/reschedule/reschedule_event.dart';
@@ -20,6 +22,7 @@ class RescheduleScreen extends StatelessWidget {
       create: (context) => RescheduleBloc(
         appointmentRepository: AppointmentRepositoryImpl(
           AppointmentDataSource(Supabase.instance.client),
+          emailRepository: EmailRepositoryImpl(EmailDataSourceImpl()),
         ),
       ),
       child: Scaffold(

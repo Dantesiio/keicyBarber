@@ -16,6 +16,8 @@ El archivo `.env` debe incluir las claves de conexión a Supabase y Google Maps:
 SUPABASE_URL=https://sjczmvfxzaajruyxgrhy.supabase.co
 SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqY3ptdmZ4emFhanJ1eXhncmh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNzE1MzQsImV4cCI6MjA3NDc0NzUzNH0.gjRo2Jd2ielDgZJ60B2m0AzzOlJpi0MAsc_7AtVtARs
 GOOGLE_MAPS_API_KEY=tu_api_key_de_google_maps_aqui
+GMAIL_EMAIL=tu_email@gmail.com
+GMAIL_APP_PASSWORD=tu_contraseña_de_aplicacion
 ```
 
 ### 🗺️ Configuración de Google Maps
@@ -55,6 +57,32 @@ flutter run
 ```
 
 > **Nota de seguridad:** La API key nunca se hardcodea en el código. Siempre se lee desde variables de entorno o archivos de configuración que no se suben al repositorio (el archivo `.env` está en `.gitignore`).
+
+### 📧 Configuración de Gmail para Notificaciones
+
+La aplicación envía correos electrónicos automáticamente cuando se crea una cita. Para configurar Gmail:
+
+1. **Habilita la verificación en 2 pasos** en tu cuenta de Google:
+   - Ve a [Mi Cuenta de Google](https://myaccount.google.com/)
+   - Seguridad → Verificación en 2 pasos → Activar
+
+2. **Genera una contraseña de aplicación**:
+   - Ve a [Contraseñas de aplicaciones](https://myaccount.google.com/apppasswords)
+   - Selecciona "Correo" y "Otro (nombre personalizado)"
+   - Ingresa "Keicy Barber" como nombre
+   - Copia la contraseña generada (16 caracteres sin espacios)
+
+3. **Agrega las credenciales a tu archivo `.env`**:
+   ```env
+   GMAIL_EMAIL=tu_email@gmail.com
+   GMAIL_APP_PASSWORD=abcd efgh ijkl mnop
+   ```
+   > **Importante:** Usa la contraseña de aplicación de 16 caracteres, NO tu contraseña normal de Gmail.
+
+4. **Prueba la funcionalidad**:
+   - Al crear una nueva cita, el usuario recibirá automáticamente un correo de confirmación con todos los detalles de la cita.
+
+> **Nota:** Si no configuras las credenciales de Gmail, la aplicación seguirá funcionando normalmente, pero no se enviarán correos de notificación. Los errores de envío de correo no afectan la creación de la cita.
 
 #### Base de Datos
 

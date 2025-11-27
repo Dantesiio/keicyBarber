@@ -41,12 +41,14 @@ import 'data/datasources/profile_data_source.dart';
 import 'data/datasources/service_data_source.dart';
 import 'data/datasources/appointment_data_source.dart';
 import 'data/datasources/location_data_source.dart';
+import 'data/datasources/email_data_source.dart';
 
 import 'data/repositories/auth_repository_impl.dart';
 import 'data/repositories/service_repository_impl.dart';
 import 'data/repositories/profile_repository_impl.dart';
 import 'data/repositories/appointment_repository_impl.dart';
 import 'data/repositories/location_repository_impl.dart';
+import 'data/repositories/email_repository_impl.dart';
 
 
 String _toIntlTag(Locale l) =>
@@ -124,6 +126,7 @@ class _MyAppState extends State<MyApp> {
     final serviceDataSource = ServiceDataSource(supabaseClient);
     final appointmentDataSource = AppointmentDataSource(supabaseClient);
     final locationDataSource = LocationDataSource(supabaseClient);
+    final emailDataSource = EmailDataSourceImpl();
 
     final authRepository = AuthRepositoryImpl(
       authDataSource: authDataSource,
@@ -136,8 +139,10 @@ class _MyAppState extends State<MyApp> {
     final serviceRepository =
         ServiceRepositoryImpl(serviceDataSource);
 
+    final emailRepository = EmailRepositoryImpl(emailDataSource);
+
     final appointmentRepository =
-        AppointmentRepositoryImpl(appointmentDataSource);
+        AppointmentRepositoryImpl(appointmentDataSource, emailRepository: emailRepository);
 
     final locationRepository =
         LocationRepositoryImpl(locationDataSource);
