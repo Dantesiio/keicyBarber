@@ -42,8 +42,7 @@ class ScheduleSummaryScreen extends StatelessWidget {
         serviceRepository: ServiceRepositoryImpl(ServiceDataSource(client)),
         locationRepository: LocationRepositoryImpl(LocationDataSource(client)),
         barberRepository: BarberRepositoryImpl(BarberDataSource(client)),
-        appointmentRepository:
-            AppointmentRepositoryImpl(AppointmentDataSource(client)),
+        appointmentRepository: AppointmentRepositoryImpl(AppointmentDataSource(client)),
       )..add(
           LoadSummaryDetails(
             serviceIds: selectedServiceIds,
@@ -59,6 +58,8 @@ class ScheduleSummaryScreen extends StatelessWidget {
         ),
         body: _ScheduleSummaryView(
           selectedDateTime: selectedDateTime,
+          selectedBarberId: selectedBarberId,
+          selectedLocationId: selectedLocationId,
         ),
       ),
     );
@@ -66,9 +67,12 @@ class ScheduleSummaryScreen extends StatelessWidget {
 }
 
 class _ScheduleSummaryView extends StatelessWidget {
-  final DateTime selectedDateTime;
 
-  const _ScheduleSummaryView({required this.selectedDateTime});
+  final DateTime selectedDateTime;
+  final String selectedLocationId;
+  final String selectedBarberId;
+
+  const _ScheduleSummaryView({required this.selectedDateTime, required this.selectedBarberId, required this.selectedLocationId});
 
   String _capitalize(String s) =>
       s.isNotEmpty ? s[0].toUpperCase() + s.substring(1) : s;
@@ -76,20 +80,15 @@ class _ScheduleSummaryView extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final yellow = const Color(0xFFF2B705);
-
     final currencyFormatter = NumberFormat.currency(
       locale: 'es_CO',
       symbol: r'$',
       decimalDigits: 0,
     );
-
     final dateLong = _capitalize(
-      DateFormat("EEEE d 'de' MMMM y", 'es_CO')
-          .format(selectedDateTime.toLocal()),
+      DateFormat("EEEE d 'de' MMMM y", 'es_CO').format(selectedDateTime),
     );
-
-    final timeStr =
-        DateFormat('h:mm a', 'es_CO').format(selectedDateTime.toLocal());
+    final timeStr = DateFormat('h:mm a', 'es_CO').format(selectedDateTime);
 
     return BlocConsumer<SummaryBloc, SummaryState>(
       listener: (context, state) {
@@ -181,9 +180,7 @@ class _ScheduleSummaryView extends StatelessWidget {
                             children: [
                               const Text(
                                 'Servicios:',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                ),
+                                style: TextStyle(fontWeight: FontWeight.w600),
                               ),
                               Text(
                                 currencyFormatter.format(state.totalPrice),
@@ -233,9 +230,7 @@ class _ScheduleSummaryView extends StatelessWidget {
                             children: [
                               const Text(
                                 'Duración total:',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                ),
+                                style: TextStyle(fontWeight: FontWeight.w600),
                               ),
                               Text(
                                 '${state.totalDuration} min',
@@ -266,9 +261,7 @@ class _ScheduleSummaryView extends StatelessWidget {
                   child: ElevatedButton(
                     onPressed: () {
                       final newAppointment = Appointment(
-                        id: DateTime.now()
-                            .millisecondsSinceEpoch
-                            .toString(),
+                        id: DateTime.now().millisecondsSinceEpoch.toString(),
                         serviceName: state.selectedServices
                             .map((s) => s.name)
                             .join(', '),
@@ -277,6 +270,12 @@ class _ScheduleSummaryView extends StatelessWidget {
                         location: state.location.name,
                         price: state.totalPrice,
                         status: 'Confirmada',
+                        barberId: selectedBarberId,
+                        locationId: int.tryParse(selectedLocationId) ?? 0,
+                        durationMinutes: state.totalDuration,
+                      );
+                      context.read<SummaryBloc>().add(
+                        ConfirmAppointmentEvent(newAppointment),
                       );
 
                       context
@@ -389,10 +388,7 @@ class _ScheduleSummaryView extends StatelessWidget {
             ),
           ),
           Expanded(
-            child: Text(
-              value,
-              style: const TextStyle(color: Colors.black87),
-            ),
+            child: Text(value, style: const TextStyle(color: Colors.black87)),
           ),
         ],
       ),

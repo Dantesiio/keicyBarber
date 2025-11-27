@@ -17,10 +17,39 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
     if (uid == null) return [];
 
     try {
-      final rows = await dataSource.fetchAppointments(uid);
-      return rows.map((j) => Appointment.fromJson(j)).toList();
-    } on PostgrestException catch (_) {
-      throw AppException("Error al obtener tus citas", code: "DB_FETCH");
+      final rows = await Supabase.instance.client
+          .from('appointments')
+          .select('''
+            id,
+            start_time,
+            status,
+            barber_id,              
+            location_id,            
+            total_duration_minutes, 
+            appointment_services(
+              services(
+                name,
+                price_cents
+              )
+            ),
+            barbers(
+              profiles(
+                first_name,
+                last_name
+              )
+            ),
+            locations(
+              name
+            )
+          ''')
+          .eq('client_id', uid)
+          .order('start_time', ascending: false);
+
+      final appointments = (rows as List)
+          .map((json) => Appointment.fromJson(json))
+          .toList();
+
+      return appointments;
     } catch (e) {
       throw AppException("Error inesperado obteniendo citas");
     }
@@ -249,6 +278,40 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
     } catch (e) {
       if (e is AppException) rethrow;
       throw AppException("Error inesperado obteniendo la próxima cita");
+    }
+  }
+
+    @override
+  Future<void> rescheduleAppointment({
+    required String appointmentId,
+    required DateTime newStartTime,
+    required int durationMinutes,
+  }) async {
+    try {
+      final startUtc = newStartTime.toUtc();
+      final endUtc = startUtc.add(Duration(minutes: durationMinutes));
+
+      final res = await Supabase.instance.client
+          .from('appointments')
+          .select('reschedule_count')
+          .eq('id', appointmentId)
+          .single();
+
+      final currentCount = res['reschedule_count'] as int? ?? 0;
+
+      await Supabase.instance.client
+          .from('appointments')
+          .update({
+            'start_time': startUtc.toIso8601String(),
+            'end_time': endUtc.toIso8601String(),
+            'reschedule_count': currentCount + 1,
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+            'status': 'pendiente',
+          })
+          .eq('id', appointmentId);
+    } catch (e) {
+      print("❌ Error al reagendar cita: $e");
+      throw Exception('Error al reagendar la cita: $e');
     }
   }
 }

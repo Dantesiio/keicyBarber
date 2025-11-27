@@ -27,7 +27,6 @@ import 'presentation/bloc/appointments/appointments_bloc.dart';
 import 'presentation/bloc/auth/auth_bloc.dart';
 import 'presentation/bloc/profile/profile_bloc.dart';
 import 'presentation/bloc/profile/profile_event.dart';
-
 import 'domain/usecases/get_services.dart';
 import 'domain/usecases/get_next_appointment.dart';
 import 'domain/usecases/login_user.dart';
@@ -82,6 +81,7 @@ Future<void> main() async {
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqY3ptdmZ4emFhanJ1eXhncmh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNzE1MzQsImV4cCI6MjA3NDc0NzUzNH0.gjRo2Jd2ielDgZJ60B2m0AzzOlJpi0MAsc_7AtVtARs';
   }
 
+  // Inicializar Supabase
   await Supabase.initialize(url: supabaseUrl!, anonKey: supabaseAnonKey!);
 
   final deviceLocale = WidgetsBinding.instance.platformDispatcher.locale;

@@ -12,7 +12,7 @@ plugins {
 val keystoreProperties = Properties()
 val envFile = File(project.rootDir.parentFile, ".env")
 if (envFile.exists()) {
-    envFile.readLines().forEach { line ->
+    envFile.readLines().forEach { line: String ->
         if (line.contains("=") && !line.startsWith("#")) {
             val (key, value) = line.split("=", limit = 2)
             keystoreProperties[key.trim()] = value.trim().removeSurrounding("\"", "\"")

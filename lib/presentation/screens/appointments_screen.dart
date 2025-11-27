@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
 import 'package:keicybarber/presentation/bloc/navigation/navigation_cubit.dart';
+import 'package:keicybarber/presentation/screens/reschedule_screen.dart';
 import '../bloc/appointments/appointments_bloc.dart';
 import '../../domain/entities/appointment.dart';
 
@@ -67,10 +68,18 @@ class AppointmentsContent extends StatelessWidget {
 
         if (state is AppointmentsLoadedState) {
           proximasCount = state.appointments
-              .where((a) =>
-                  a.status == 'Pendiente' ||
-                  a.status == 'Confirmada' ||
-                  a.status == 'En Proceso')
+              .where(
+                (a) =>
+                    a.status == 'Pendiente' ||
+                    a.status == 'Confirmada' ||
+                    a.status == 'En Proceso',
+              )
+              .length;
+          completadasCount = state.appointments
+              .where((a) => a.status == 'Completada')
+              .length;
+          canceladasCount = state.appointments
+              .where((a) => a.status == 'Cancelada')
               .length;
 
           completadasCount =
@@ -415,7 +424,22 @@ class _AppointmentCard extends StatelessWidget {
                 children: [
                   Expanded(
                     child: OutlinedButton(
-                      onPressed: () {},
+                      onPressed: () async {
+                        // Navegar a la pantalla de reagendamiento
+                        final result = await Navigator.of(context).push(
+                          MaterialPageRoute(
+                            builder: (_) =>
+                                RescheduleScreen(appointment: appointment),
+                          ),
+                        );
+
+                        // Si el resultado es true (éxito), recargamos la lista de citas
+                        if (result == true) {
+                          context.read<AppointmentsBloc>().add(
+                            LoadAppointmentsEvent(),
+                          );
+                        }
+                      },
                       style: OutlinedButton.styleFrom(
                         side: const BorderSide(color: Colors.black),
                         shape: RoundedRectangleBorder(

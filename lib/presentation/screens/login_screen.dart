@@ -90,10 +90,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 8),
                     const Text(
                       'Inicia sesión para continuar',
-                      style: TextStyle(
-                        fontSize: 16,
-                        color: Colors.black54,
-                      ),
+                      style: TextStyle(fontSize: 16, color: Colors.black54),
                       textAlign: TextAlign.center,
                     ),
                     const SizedBox(height: 40),
@@ -159,8 +156,9 @@ class _LoginScreenState extends State<LoginScreen> {
                               onPressed: isLoading
                                   ? null
                                   : () {
-                                      Navigator.of(context)
-                                          .pushNamed('/forgot-password');
+                                      Navigator.of(
+                                        context,
+                                      ).pushNamed('/forgot-password');
                                     },
                               child: const Text('¿Olvidaste tu contraseña?'),
                             ),
@@ -205,8 +203,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                 onPressed: isLoading
                                     ? null
                                     : () {
-                                        Navigator.of(context)
-                                            .pushNamed('/register');
+                                        Navigator.of(
+                                          context,
+                                        ).pushNamed('/register');
                                       },
                                 child: const Text('Regístrate'),
                               ),
