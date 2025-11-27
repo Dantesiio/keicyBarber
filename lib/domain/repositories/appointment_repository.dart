@@ -4,7 +4,7 @@ import 'package:flutter/material.dart';
 abstract class AppointmentRepository {
   Future<List<Appointment>> getAppointments();
 
-  Future<void> createAppointment({
+  Future<String> createAppointment({
     required Appointment appointment,
     required List<int> serviceIds,
     required String barberId,
@@ -24,4 +24,6 @@ abstract class AppointmentRepository {
   Future<void> cancelAppointment(String id);
 
   Future<Appointment?> getNextAppointment();
+
+  Future<Appointment?> getAppointmentById(String appointmentId);
 }

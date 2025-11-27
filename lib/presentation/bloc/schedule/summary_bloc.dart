@@ -7,6 +7,7 @@ import 'package:keicybarber/domain/repositories/appointment_repository.dart';
 import 'package:keicybarber/domain/repositories/barber_repository.dart';
 import 'package:keicybarber/domain/repositories/location_repository.dart';
 import 'package:keicybarber/domain/repositories/service_repository.dart';
+import 'package:keicybarber/domain/usecases/schedule_appointment_reminders.dart';
 
 part 'summary_event.dart';
 part 'summary_state.dart';
@@ -16,12 +17,14 @@ class SummaryBloc extends Bloc<SummaryEvent, SummaryState> {
   final LocationRepository locationRepository;
   final BarberRepository barberRepository;
   final AppointmentRepository appointmentRepository;
+  final ScheduleAppointmentReminders scheduleAppointmentReminders;
 
   SummaryBloc({
     required this.serviceRepository,
     required this.locationRepository,
     required this.barberRepository,
     required this.appointmentRepository,
+    required this.scheduleAppointmentReminders,
   }) : super(SummaryInitial()) {
     on<LoadSummaryDetails>(_onLoadSummaryDetails);
     on<ConfirmAppointmentEvent>(_onConfirmAppointment);
@@ -134,7 +137,7 @@ class SummaryBloc extends Bloc<SummaryEvent, SummaryState> {
           .cast<int>()
           .toList();
 
-      await appointmentRepository.createAppointment(
+      final appointmentId = await appointmentRepository.createAppointment(
         appointment: appointmentUTC,
         serviceIds: serviceIds,
         barberId: current.barber.id,
@@ -142,6 +145,19 @@ class SummaryBloc extends Bloc<SummaryEvent, SummaryState> {
         totalDurationMinutes: totalDurationMinutes,
         estimatedPriceCents: estimatedPriceCents,
       );
+
+      // Obtener la cita completa para programar notificaciones
+      final createdAppointment = await appointmentRepository.getAppointmentById(appointmentId);
+      
+      // Programar notificaciones si la cita se obtuvo correctamente
+      if (createdAppointment != null) {
+        try {
+          await scheduleAppointmentReminders.call(createdAppointment);
+        } catch (e) {
+          // No fallar la creación de la cita si las notificaciones fallan
+          print('Error programando notificaciones: $e');
+        }
+      }
 
       emit(SummaryConfirmationSuccess());
     } catch (e) {

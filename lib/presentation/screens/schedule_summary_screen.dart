@@ -18,6 +18,9 @@ import 'package:keicybarber/domain/entities/appointment.dart';
 import 'package:keicybarber/presentation/bloc/appointments/appointments_bloc.dart';
 import 'package:keicybarber/presentation/bloc/navigation/navigation_cubit.dart';
 import 'package:keicybarber/presentation/bloc/schedule/summary_bloc.dart';
+import 'package:keicybarber/core/services/notification_service.dart';
+import 'package:keicybarber/data/repositories/notification_repository_impl.dart';
+import 'package:keicybarber/domain/usecases/schedule_appointment_reminders.dart';
 
 class ScheduleSummaryScreen extends StatelessWidget {
   final Set<String> selectedServiceIds;
@@ -37,6 +40,14 @@ class ScheduleSummaryScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final client = Supabase.instance.client;
 
+    // Configurar notificaciones
+    final notificationService = NotificationService();
+    final notificationRepository = NotificationRepositoryImpl(
+      notificationService: notificationService,
+      supabaseClient: client,
+    );
+    final scheduleAppointmentRemindersUseCase = ScheduleAppointmentReminders(notificationRepository);
+
     return BlocProvider(
       create: (context) => SummaryBloc(
         serviceRepository: ServiceRepositoryImpl(ServiceDataSource(client)),
@@ -44,6 +55,7 @@ class ScheduleSummaryScreen extends StatelessWidget {
         barberRepository: BarberRepositoryImpl(BarberDataSource(client)),
         appointmentRepository:
             AppointmentRepositoryImpl(AppointmentDataSource(client)),
+        scheduleAppointmentReminders: scheduleAppointmentRemindersUseCase,
       )..add(
           LoadSummaryDetails(
             serviceIds: selectedServiceIds,

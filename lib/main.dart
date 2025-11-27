@@ -36,18 +36,20 @@ import 'domain/usecases/reset_password.dart';
 import 'domain/usecases/logout_user.dart';
 import 'domain/usecases/get_profile.dart';
 import 'domain/usecases/update_profile.dart';
+import 'domain/usecases/cancel_appointment_reminders.dart';
+
+import 'core/services/notification_service.dart';
+import 'data/repositories/notification_repository_impl.dart';
 
 import 'data/datasources/auth_data_source.dart';
 import 'data/datasources/profile_data_source.dart';
 import 'data/datasources/service_data_source.dart';
 import 'data/datasources/appointment_data_source.dart';
-import 'data/datasources/location_data_source.dart';
 
 import 'data/repositories/auth_repository_impl.dart';
 import 'data/repositories/service_repository_impl.dart';
 import 'data/repositories/profile_repository_impl.dart';
 import 'data/repositories/appointment_repository_impl.dart';
-import 'data/repositories/location_repository_impl.dart';
 
 
 String _toIntlTag(Locale l) =>
@@ -82,7 +84,10 @@ Future<void> main() async {
         'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqY3ptdmZ4emFhanJ1eXhncmh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNzE1MzQsImV4cCI6MjA3NDc0NzUzNH0.gjRo2Jd2ielDgZJ60B2m0AzzOlJpi0MAsc_7AtVtARs';
   }
 
-  await Supabase.initialize(url: supabaseUrl!, anonKey: supabaseAnonKey!);
+  await Supabase.initialize(url: supabaseUrl, anonKey: supabaseAnonKey);
+
+  // Inicializar servicio de notificaciones
+  await NotificationService().initialize();
 
   final deviceLocale = WidgetsBinding.instance.platformDispatcher.locale;
   final initialTag = _toIntlTag(deviceLocale);
@@ -123,7 +128,6 @@ class _MyAppState extends State<MyApp> {
     final profileDataSource = ProfileDataSourceImpl(supabaseClient);
     final serviceDataSource = ServiceDataSource(supabaseClient);
     final appointmentDataSource = AppointmentDataSource(supabaseClient);
-    final locationDataSource = LocationDataSource(supabaseClient);
 
     final authRepository = AuthRepositoryImpl(
       authDataSource: authDataSource,
@@ -139,9 +143,6 @@ class _MyAppState extends State<MyApp> {
     final appointmentRepository =
         AppointmentRepositoryImpl(appointmentDataSource);
 
-    final locationRepository =
-        LocationRepositoryImpl(locationDataSource);
-
     final getServicesUseCase = GetServices(serviceRepository);
     final getNextAppointmentUseCase = GetNextAppointment(appointmentRepository);
 
@@ -152,6 +153,14 @@ class _MyAppState extends State<MyApp> {
 
     final getProfileUseCase = GetProfile(profileRepository);
     final updateProfileUseCase = UpdateProfile(profileRepository);
+
+    // Configurar repositorio y casos de uso de notificaciones
+    final notificationService = NotificationService();
+    final notificationRepository = NotificationRepositoryImpl(
+      notificationService: notificationService,
+      supabaseClient: supabaseClient,
+    );
+    final cancelAppointmentRemindersUseCase = CancelAppointmentReminders(notificationRepository);
 
     return MultiBlocProvider(
       providers: [
@@ -186,6 +195,7 @@ class _MyAppState extends State<MyApp> {
           create: (context) => AppointmentsBloc(
             getAppointments: GetAppointments(appointmentRepository),
             appointmentRepository: appointmentRepository,
+            cancelAppointmentReminders: cancelAppointmentRemindersUseCase,
           ),
         ),
       ],
@@ -211,9 +221,7 @@ class _MyAppState extends State<MyApp> {
           Locale('en'),
         ],
         localeResolutionCallback: (locale, supported) {
-          final chosen = locale ??
-              WidgetsBinding.instance.platformDispatcher.locale ??
-              supported.first;
+          final chosen = locale ?? supported.first;
           final tag = _toIntlTag(chosen);
           initializeDateFormatting(tag);
           Intl.defaultLocale = tag;

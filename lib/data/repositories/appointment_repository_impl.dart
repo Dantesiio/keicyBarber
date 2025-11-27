@@ -80,7 +80,7 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
   }
 
   @override
-  Future<void> createAppointment({
+  Future<String> createAppointment({
     required Appointment appointment,
     required List<int> serviceIds,
     required String barberId,
@@ -126,6 +126,8 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
 
         await dataSource.insertAppointmentServices(rows);
       }
+
+      return apptId.toString();
     } on AppException {
       rethrow;
     } on PostgrestException catch (_) {
@@ -249,6 +251,20 @@ class AppointmentRepositoryImpl implements AppointmentRepository {
     } catch (e) {
       if (e is AppException) rethrow;
       throw AppException("Error inesperado obteniendo la próxima cita");
+    }
+  }
+
+  @override
+  Future<Appointment?> getAppointmentById(String appointmentId) async {
+    try {
+      final row = await dataSource.fetchAppointmentById(appointmentId);
+      if (row == null) return null;
+      return Appointment.fromJson(row);
+    } on PostgrestException catch (_) {
+      throw AppException("Error obteniendo la cita", code: "DB_FETCH");
+    } catch (e) {
+      if (e is AppException) rethrow;
+      throw AppException("Error inesperado obteniendo la cita");
     }
   }
 }

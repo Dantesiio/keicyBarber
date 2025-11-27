@@ -124,4 +124,34 @@ class AppointmentDataSource {
         .limit(1)
         .maybeSingle();
   }
+
+  Future<Map<String, dynamic>?> fetchAppointmentById(String appointmentId) async {
+    return await _sb
+        .from('appointments')
+        .select('''
+          id,
+          start_time,
+          end_time,
+          status,
+          estimated_price_cents,
+          appointment_services(
+            services(
+              name,
+              price_cents
+            )
+          ),
+          barbers(
+            profiles(
+              first_name,
+              last_name
+            )
+          ),
+          locations(
+            name,
+            address
+          )
+        ''')
+        .eq('id', appointmentId)
+        .single();
+  }
 }

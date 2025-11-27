@@ -2,6 +2,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../domain/entities/appointment.dart';
 import '../../../domain/usecases/get_appointments.dart';
 import '../../../domain/repositories/appointment_repository.dart';
+import '../../../domain/usecases/cancel_appointment_reminders.dart';
 
 abstract class AppointmentsEvent {}
 
@@ -56,10 +57,12 @@ class AppointmentsErrorState extends AppointmentsState {
 class AppointmentsBloc extends Bloc<AppointmentsEvent, AppointmentsState> {
   final GetAppointments getAppointments;
   final AppointmentRepository appointmentRepository;
+  final CancelAppointmentReminders cancelAppointmentReminders;
 
   AppointmentsBloc({
     required this.getAppointments,
     required this.appointmentRepository,
+    required this.cancelAppointmentReminders,
   }) : super(AppointmentsInitialState()) {
     on<LoadAppointmentsEvent>(_onLoadAppointments);
     on<CancelAppointmentEvent>(_onCancelAppointment);
@@ -101,6 +104,14 @@ class AppointmentsBloc extends Bloc<AppointmentsEvent, AppointmentsState> {
     Emitter<AppointmentsState> emit,
   ) async {
     try {
+      // Cancelar notificaciones antes de cancelar la cita
+      try {
+        await cancelAppointmentReminders.call(event.appointmentId);
+      } catch (e) {
+        print('Error cancelando notificaciones: $e');
+        // Continuar con la cancelación de la cita aunque falle la cancelación de notificaciones
+      }
+
       await appointmentRepository.cancelAppointment(event.appointmentId);
 
       final appointments = await getAppointments.execute();

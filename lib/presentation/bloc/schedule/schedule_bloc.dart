@@ -1,5 +1,4 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:intl/intl.dart';
 
 import '../../../../domain/entities/service.dart';
 import '../../../../domain/usecases/get_services.dart';
