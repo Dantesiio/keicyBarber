@@ -4,6 +4,8 @@ import 'package:intl/intl.dart';
 import 'package:keicybarber/presentation/bloc/navigation/navigation_cubit.dart';
 import 'package:keicybarber/presentation/screens/reschedule_screen.dart';
 import '../bloc/appointments/appointments_bloc.dart';
+import '../bloc/home/home_bloc.dart';
+import '../bloc/home/home_event.dart';
 import '../../domain/entities/appointment.dart';
 
 class AppointmentsScreen extends StatefulWidget {
@@ -433,11 +435,13 @@ class _AppointmentCard extends StatelessWidget {
                           ),
                         );
 
-                        // Si el resultado es true (éxito), recargamos la lista de citas
+                        // Si el resultado es true (éxito), recargamos la lista de citas y la próxima cita en el home
                         if (result == true) {
                           context.read<AppointmentsBloc>().add(
                             LoadAppointmentsEvent(),
                           );
+                          // Actualizar la próxima cita en el home
+                          context.read<HomeBloc>().add(RefreshNextAppointment());
                         }
                       },
                       style: OutlinedButton.styleFrom(

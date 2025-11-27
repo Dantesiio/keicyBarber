@@ -18,6 +18,8 @@ import 'package:keicybarber/domain/entities/appointment.dart';
 import 'package:keicybarber/presentation/bloc/appointments/appointments_bloc.dart';
 import 'package:keicybarber/presentation/bloc/navigation/navigation_cubit.dart';
 import 'package:keicybarber/presentation/bloc/schedule/summary_bloc.dart';
+import 'package:keicybarber/presentation/bloc/home/home_bloc.dart';
+import 'package:keicybarber/presentation/bloc/home/home_event.dart';
 
 class ScheduleSummaryScreen extends StatelessWidget {
   final Set<String> selectedServiceIds;
@@ -100,6 +102,8 @@ class _ScheduleSummaryView extends StatelessWidget {
           Navigator.of(context).popUntil((route) => route.isFirst);
           context.read<NavigationCubit>().setPage(2);
           context.read<AppointmentsBloc>().add(LoadAppointmentsEvent());
+          // Actualizar la próxima cita en el home
+          context.read<HomeBloc>().add(RefreshNextAppointment());
 
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
