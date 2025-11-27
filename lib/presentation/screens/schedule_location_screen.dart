@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../data/datasources/location_data_source.dart';
 import 'package:keicybarber/domain/usecases/get_locations.dart';
 import 'package:keicybarber/data/repositories/location_repository_impl.dart';
 import 'package:keicybarber/presentation/bloc/schedule/location_bloc.dart';
@@ -8,22 +10,28 @@ import 'package:keicybarber/presentation/screens/locations_map_screen.dart';
 
 class ScheduleLocationScreen extends StatelessWidget {
   final Set<String> selectedServiceIds;
+  final int totalDurationMinutes;
 
   const ScheduleLocationScreen({
     super.key,
     required this.selectedServiceIds,
+    required this.totalDurationMinutes,
   });
 
   @override
   Widget build(BuildContext context) {
-    // Idealmente, esto se inyectaría con get_it o un provider de más alto nivel
-    // NOTA: El usecase GetLocations ya no es necesario aquí, el BLoC lo manejará.
-    final getLocations = GetLocations(LocationRepositoryImpl());
+    final client = Supabase.instance.client;
+
+    final getLocations = GetLocations(
+      LocationRepositoryImpl(
+        LocationDataSource(client),
+      ),
+    );
 
     return BlocProvider(
-      create: (context) => LocationBloc(getLocations: getLocations)..add(LoadLocations()),
+      create: (context) =>
+          LocationBloc(getLocations: getLocations)..add(LoadLocations()),
       child: Scaffold(
-        // Usamos un Scaffold para tener un AppBar y un fondo consistente
         appBar: AppBar(
           backgroundColor: const Color(0xFFF2B705),
           elevation: 0,
@@ -31,7 +39,8 @@ class ScheduleLocationScreen extends StatelessWidget {
           actions: [
             BlocBuilder<LocationBloc, LocationState>(
               builder: (context, state) {
-                if (state is LocationLoaded && state.locations.isNotEmpty) {
+                if (state is LocationLoaded &&
+                    state.locations.isNotEmpty) {
                   return IconButton(
                     icon: const Icon(Icons.map_outlined),
                     tooltip: 'Ver en mapa',
@@ -52,7 +61,10 @@ class ScheduleLocationScreen extends StatelessWidget {
             ),
           ],
         ),
-        body: _ScheduleLocationView(selectedServiceIds: selectedServiceIds),
+        body: _ScheduleLocationView(
+          selectedServiceIds: selectedServiceIds,
+          totalDurationMinutes: totalDurationMinutes,
+        ),
       ),
     );
   }
@@ -60,8 +72,12 @@ class ScheduleLocationScreen extends StatelessWidget {
 
 class _ScheduleLocationView extends StatelessWidget {
   final Set<String> selectedServiceIds;
+  final int totalDurationMinutes;
 
-  const _ScheduleLocationView({required this.selectedServiceIds});
+  const _ScheduleLocationView({
+    required this.selectedServiceIds,
+    required this.totalDurationMinutes,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -69,7 +85,7 @@ class _ScheduleLocationView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // --- Header ---
+        // Header
         Container(
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
@@ -94,6 +110,7 @@ class _ScheduleLocationView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
+
         Expanded(
           child: BlocBuilder<LocationBloc, LocationState>(
             builder: (context, state) {
@@ -109,35 +126,46 @@ class _ScheduleLocationView extends StatelessWidget {
                   itemCount: state.locations.length,
                   itemBuilder: (context, index) {
                     final location = state.locations[index];
-                    final isSelected = state.selectedLocationId == location.id;
+                    final isSelected =
+                        state.selectedLocationId == location.id;
 
                     return GestureDetector(
                       onTap: () {
-                        context.read<LocationBloc>().add(SelectLocation(location.id));
+                        context
+                            .read<LocationBloc>()
+                            .add(SelectLocation(location.id));
                       },
                       child: Card(
                         margin: const EdgeInsets.only(bottom: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
                           side: BorderSide(
-                            color: isSelected ? yellow : Colors.transparent,
+                            color:
+                                isSelected ? yellow : Colors.transparent,
                             width: 2,
                           ),
                         ),
                         child: ListTile(
                           isThreeLine: true,
-                          title: Text(location.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                          title: Text(
+                            location.name,
+                            style: const TextStyle(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                           subtitle: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(location.address),
                               const SizedBox(height: 4),
-                              if (location.latitude != null && location.longitude != null)
+                              if (location.latitude != null &&
+                                  location.longitude != null)
                                 TextButton.icon(
                                   onPressed: () {
                                     Navigator.of(context).push(
                                       MaterialPageRoute(
-                                        builder: (_) => LocationsMapScreen(
+                                        builder: (_) =>
+                                            LocationsMapScreen(
                                           locations: state.locations,
                                           selectedLocationId: location.id,
                                         ),
@@ -147,9 +175,15 @@ class _ScheduleLocationView extends StatelessWidget {
                                   icon: const Icon(Icons.map, size: 16),
                                   label: const Text('Ver en mapa'),
                                   style: TextButton.styleFrom(
-                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    padding:
+                                        const EdgeInsets.symmetric(
+                                      horizontal: 8,
+                                      vertical: 4,
+                                    ),
                                     minimumSize: Size.zero,
-                                    tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                                    tapTargetSize:
+                                        MaterialTapTargetSize
+                                            .shrinkWrap,
                                   ),
                                 ),
                             ],
@@ -167,22 +201,31 @@ class _ScheduleLocationView extends StatelessWidget {
             },
           ),
         ),
-        // --- Botón para continuar ---
+
+        // Botón continuar
         BlocBuilder<LocationBloc, LocationState>(
           builder: (context, state) {
-            if (state is LocationLoaded && state.selectedLocationId != null) {
+            if (state is LocationLoaded &&
+                state.selectedLocationId != null) {
               return Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => ScheduleBarberScreen(
-                        selectedServiceIds: selectedServiceIds,
-                        selectedLocationId: state.selectedLocationId!,
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ScheduleBarberScreen(
+                          selectedServiceIds: selectedServiceIds,
+                          selectedLocationId: state.selectedLocationId!,
+                          totalDurationMinutes: totalDurationMinutes,
+                        ),
                       ),
-                    ));
+                    );
                   },
-                  style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50), backgroundColor: yellow, foregroundColor: Colors.black),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 50),
+                    backgroundColor: yellow,
+                    foregroundColor: Colors.black,
+                  ),
                   child: const Text('Continuar'),
                 ),
               );

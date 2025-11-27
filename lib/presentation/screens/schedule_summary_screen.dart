@@ -1,11 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 import 'package:keicybarber/data/repositories/appointment_repository_impl.dart';
 import 'package:keicybarber/data/repositories/barber_repository_impl.dart';
 import 'package:keicybarber/data/repositories/location_repository_impl.dart';
 import 'package:keicybarber/data/repositories/service_repository_impl.dart';
+
+import 'package:keicybarber/data/datasources/appointment_data_source.dart';
+import 'package:keicybarber/data/datasources/barber_data_source.dart';
+import 'package:keicybarber/data/datasources/location_data_source.dart';
+import 'package:keicybarber/data/datasources/service_data_source.dart';
 
 import 'package:keicybarber/domain/entities/appointment.dart';
 
@@ -29,12 +35,15 @@ class ScheduleSummaryScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final client = Supabase.instance.client;
+
     return BlocProvider(
       create: (context) => SummaryBloc(
-        serviceRepository: ServiceRepositoryImpl(),
-        locationRepository: LocationRepositoryImpl(),
-        barberRepository: BarberRepositoryImpl(),
-        appointmentRepository: AppointmentRepositoryImpl(),
+        serviceRepository: ServiceRepositoryImpl(ServiceDataSource(client)),
+        locationRepository: LocationRepositoryImpl(LocationDataSource(client)),
+        barberRepository: BarberRepositoryImpl(BarberDataSource(client)),
+        appointmentRepository:
+            AppointmentRepositoryImpl(AppointmentDataSource(client)),
       )..add(
           LoadSummaryDetails(
             serviceIds: selectedServiceIds,
@@ -163,16 +172,18 @@ class _ScheduleSummaryView extends StatelessWidget {
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-
                           const SizedBox(height: 12),
 
-                          // SERVICIOS + TOTAL
+                          // Servicios + total
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            mainAxisAlignment:
+                                MainAxisAlignment.spaceBetween,
                             children: [
                               const Text(
                                 'Servicios:',
-                                style: TextStyle(fontWeight: FontWeight.w600),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                               Text(
                                 currencyFormatter.format(state.totalPrice),
@@ -183,7 +194,6 @@ class _ScheduleSummaryView extends StatelessWidget {
                               ),
                             ],
                           ),
-
                           const SizedBox(height: 4),
 
                           Column(
@@ -204,7 +214,8 @@ class _ScheduleSummaryView extends StatelessWidget {
                                     Text(
                                       currencyFormatter.format(s.price),
                                       style: const TextStyle(
-                                        color: Colors.black54),
+                                        color: Colors.black54,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -217,11 +228,14 @@ class _ScheduleSummaryView extends StatelessWidget {
 
                           // Duración total
                           Row(
-                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            mainAxisAlignment:
+                                MainAxisAlignment.spaceBetween,
                             children: [
                               const Text(
                                 'Duración total:',
-                                style: TextStyle(fontWeight: FontWeight.w600),
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                               Text(
                                 '${state.totalDuration} min',
@@ -231,7 +245,6 @@ class _ScheduleSummaryView extends StatelessWidget {
                               ),
                             ],
                           ),
-
                           const SizedBox(height: 12),
 
                           // Información general
@@ -338,7 +351,8 @@ class _ScheduleSummaryView extends StatelessWidget {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFF2B705),
                     foregroundColor: Colors.black,
-                    padding: const EdgeInsets.symmetric(vertical: 12),
+                    padding:
+                        const EdgeInsets.symmetric(vertical: 12),
                     shape: RoundedRectangleBorder(
                       borderRadius: BorderRadius.circular(12),
                     ),

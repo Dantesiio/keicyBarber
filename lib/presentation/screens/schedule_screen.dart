@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+
 import 'package:keicybarber/presentation/screens/schedule_location_screen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../data/datasources/service_data_source.dart';
 import '../../data/repositories/service_repository_impl.dart';
 import '../bloc/schedule/schedule_bloc.dart';
 import '../../domain/usecases/get_services.dart';
@@ -11,10 +14,17 @@ class ScheduleScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final getServices = GetServices(ServiceRepositoryImpl());
+    final client = Supabase.instance.client;
+
+    final getServices = GetServices(
+      ServiceRepositoryImpl(
+        ServiceDataSource(client),
+      ),
+    );
 
     return BlocProvider(
-      create: (context) => ScheduleBloc(getServices: getServices)..add(LoadServices()),
+      create: (context) =>
+          ScheduleBloc(getServices: getServices)..add(LoadServices()),
       child: const _ScheduleView(),
     );
   }
@@ -54,13 +64,26 @@ class _ScheduleView extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
+
         // Resumen de servicios seleccionados
         BlocBuilder<ScheduleBloc, ScheduleState>(
           builder: (context, state) {
-            if (state is ScheduleLoaded && state.selectedServiceIds.isNotEmpty) {
-              final currencyFormatter = NumberFormat.currency(locale: 'es_CO', symbol: r'$', decimalDigits: 0);
-              final selectedServices = state.services.where((s) => state.selectedServiceIds.contains(s.id)).toList();
-              final totalPrice = selectedServices.fold(0.0, (sum, service) => sum + service.price);
+            if (state is ScheduleLoaded &&
+                state.selectedServiceIds.isNotEmpty) {
+              final currencyFormatter = NumberFormat.currency(
+                locale: 'es_CO',
+                symbol: r'$',
+                decimalDigits: 0,
+              );
+
+              final selectedServices = state.services
+                  .where((s) => state.selectedServiceIds.contains(s.id))
+                  .toList();
+
+              final totalPrice = selectedServices.fold<double>(
+                0.0,
+                (sum, service) => sum + service.price,
+              );
 
               return Padding(
                 padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
@@ -76,27 +99,46 @@ class _ScheduleView extends StatelessWidget {
                       children: [
                         const Text(
                           'Resumen',
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.w600,
+                          ),
                         ),
                         const SizedBox(height: 8),
-                        ...selectedServices.map((service) => Padding(
-                              padding: const EdgeInsets.symmetric(vertical: 4.0),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                children: [
-                                  Text(service.name),
-                                  Text(currencyFormatter.format(service.price)),
-                                ],
-                              ),
-                            )),
+                        ...selectedServices.map(
+                          (service) => Padding(
+                            padding:
+                                const EdgeInsets.symmetric(vertical: 4.0),
+                            child: Row(
+                              mainAxisAlignment:
+                                  MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(service.name),
+                                Text(
+                                  currencyFormatter.format(service.price),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
                         const Divider(height: 24),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            const Text('Total', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                            const Text(
+                              'Total',
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                              ),
+                            ),
                             Text(
                               currencyFormatter.format(totalPrice),
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 18, color: yellow),
+                              style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 18,
+                                color: yellow,
+                              ),
                             ),
                           ],
                         ),
@@ -109,6 +151,8 @@ class _ScheduleView extends StatelessWidget {
             return const SizedBox.shrink();
           },
         ),
+
+        // Lista de servicios
         Expanded(
           child: BlocBuilder<ScheduleBloc, ScheduleState>(
             builder: (context, state) {
@@ -119,13 +163,18 @@ class _ScheduleView extends StatelessWidget {
                 return Center(child: Text(state.message));
               }
               if (state is ScheduleLoaded) {
-                final currencyFormatter = NumberFormat.currency(locale: 'es_CO', symbol: r'$', decimalDigits: 0);
+                final currencyFormatter = NumberFormat.currency(
+                  locale: 'es_CO',
+                  symbol: r'$',
+                  decimalDigits: 0,
+                );
                 return ListView.builder(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   itemCount: state.services.length,
                   itemBuilder: (context, index) {
                     final service = state.services[index];
-                    final isSelected = state.selectedServiceIds.contains(service.id);
+                    final isSelected =
+                        state.selectedServiceIds.contains(service.id);
 
                     return Card(
                       margin: const EdgeInsets.only(bottom: 12),
@@ -142,7 +191,8 @@ class _ScheduleView extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              mainAxisAlignment:
+                                  MainAxisAlignment.spaceBetween,
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Expanded(
@@ -160,15 +210,25 @@ class _ScheduleView extends StatelessWidget {
                                   children: [
                                     Row(
                                       children: [
-                                        const Icon(Icons.schedule, size: 14),
+                                        const Icon(
+                                          Icons.schedule,
+                                          size: 14,
+                                        ),
                                         const SizedBox(width: 6),
-                                        Text('${service.durationMinutes} min', style: const TextStyle(fontSize: 12)),
+                                        Text(
+                                          '${service.durationMinutes} min',
+                                          style: const TextStyle(
+                                            fontSize: 12,
+                                          ),
+                                        ),
                                       ],
                                     ),
                                     const SizedBox(height: 6),
                                     Text(
                                       currencyFormatter.format(service.price),
-                                      style: const TextStyle(fontWeight: FontWeight.bold),
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.bold,
+                                      ),
                                     ),
                                   ],
                                 ),
@@ -182,16 +242,25 @@ class _ScheduleView extends StatelessWidget {
                             const SizedBox(height: 12),
                             ElevatedButton(
                               onPressed: () {
-                                context.read<ScheduleBloc>().add(ToggleServiceSelection(service.id));
+                                context.read<ScheduleBloc>().add(
+                                      ToggleServiceSelection(service.id),
+                                    );
                               },
                               style: ElevatedButton.styleFrom(
-                                backgroundColor: isSelected ? yellow : Colors.white,
-                                foregroundColor: isSelected ? Colors.black : Colors.black,
+                                backgroundColor:
+                                    isSelected ? yellow : Colors.white,
+                                foregroundColor: Colors.black,
                                 side: BorderSide(
-                                  color: isSelected ? yellow : Colors.grey.shade300,
+                                  color: isSelected
+                                      ? yellow
+                                      : Colors.grey.shade300,
                                 ),
                               ),
-                              child: Text(isSelected ? '✓ Agregado' : '+ Agregar servicio'),
+                              child: Text(
+                                isSelected
+                                    ? '✓ Agregado'
+                                    : '+ Agregar servicio',
+                              ),
                             ),
                           ],
                         ),
@@ -204,19 +273,40 @@ class _ScheduleView extends StatelessWidget {
             },
           ),
         ),
+
         // Botón para continuar
         BlocBuilder<ScheduleBloc, ScheduleState>(
           builder: (context, state) {
-            if (state is ScheduleLoaded && state.selectedServiceIds.isNotEmpty) {
+            if (state is ScheduleLoaded &&
+                state.selectedServiceIds.isNotEmpty) {
               return Padding(
                 padding: const EdgeInsets.all(16.0),
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => ScheduleLocationScreen(selectedServiceIds: state.selectedServiceIds),
-                    ));
+                    final selectedServices = state.services
+                        .where((s) =>
+                            state.selectedServiceIds.contains(s.id))
+                        .toList();
+
+                    final totalDurationMinutes = selectedServices.fold<int>(
+                      0,
+                      (sum, s) => sum + s.durationMinutes,
+                    );
+
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ScheduleLocationScreen(
+                          selectedServiceIds: state.selectedServiceIds,
+                          totalDurationMinutes: totalDurationMinutes,
+                        ),
+                      ),
+                    );
                   },
-                  style: ElevatedButton.styleFrom(minimumSize: const Size(double.infinity, 50), backgroundColor: yellow, foregroundColor: Colors.black),
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: const Size(double.infinity, 50),
+                    backgroundColor: yellow,
+                    foregroundColor: Colors.black,
+                  ),
                   child: const Text('Continuar'),
                 ),
               );

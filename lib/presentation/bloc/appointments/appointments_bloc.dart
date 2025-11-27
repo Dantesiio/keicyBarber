@@ -1,8 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../../domain/entities/appointment.dart';
 import '../../../domain/usecases/get_appointments.dart';
+import '../../../domain/repositories/appointment_repository.dart';
 
-// Events
 abstract class AppointmentsEvent {}
 
 class LoadAppointmentsEvent extends AppointmentsEvent {}
@@ -17,22 +17,30 @@ class ChangeTabEvent extends AppointmentsEvent {
   ChangeTabEvent({required this.tabIndex});
 }
 
-// States
 abstract class AppointmentsState {
   final List<Appointment> appointments;
   final int currentTab;
 
-  AppointmentsState({this.appointments = const [], this.currentTab = 0});
+  AppointmentsState({
+    this.appointments = const [],
+    this.currentTab = 0,
+  });
 }
 
 class AppointmentsInitialState extends AppointmentsState {}
 
 class AppointmentsLoadingState extends AppointmentsState {
-  AppointmentsLoadingState({super.appointments, super.currentTab});
+  AppointmentsLoadingState({
+    super.appointments,
+    super.currentTab,
+  });
 }
 
 class AppointmentsLoadedState extends AppointmentsState {
-  AppointmentsLoadedState({required super.appointments, super.currentTab});
+  AppointmentsLoadedState({
+    required super.appointments,
+    super.currentTab,
+  });
 }
 
 class AppointmentsErrorState extends AppointmentsState {
@@ -45,11 +53,14 @@ class AppointmentsErrorState extends AppointmentsState {
   });
 }
 
-// Bloc
 class AppointmentsBloc extends Bloc<AppointmentsEvent, AppointmentsState> {
-  final GetAppointments _getAppointments = GetAppointments();
+  final GetAppointments getAppointments;
+  final AppointmentRepository appointmentRepository;
 
-  AppointmentsBloc() : super(AppointmentsInitialState()) {
+  AppointmentsBloc({
+    required this.getAppointments,
+    required this.appointmentRepository,
+  }) : super(AppointmentsInitialState()) {
     on<LoadAppointmentsEvent>(_onLoadAppointments);
     on<CancelAppointmentEvent>(_onCancelAppointment);
     on<ChangeTabEvent>(_onChangeTab);
@@ -65,8 +76,9 @@ class AppointmentsBloc extends Bloc<AppointmentsEvent, AppointmentsState> {
         currentTab: state.currentTab,
       ),
     );
+
     try {
-      final appointments = await _getAppointments.execute();
+      final appointments = await getAppointments.execute();
       emit(
         AppointmentsLoadedState(
           appointments: appointments,
@@ -74,7 +86,6 @@ class AppointmentsBloc extends Bloc<AppointmentsEvent, AppointmentsState> {
         ),
       );
     } catch (e) {
-      print("❌ Error al cargar citas: $e");
       emit(
         AppointmentsErrorState(
           message: 'Error al cargar citas',
@@ -90,8 +101,10 @@ class AppointmentsBloc extends Bloc<AppointmentsEvent, AppointmentsState> {
     Emitter<AppointmentsState> emit,
   ) async {
     try {
-      await _getAppointments.repository.cancelAppointment(event.appointmentId);
-      final appointments = await _getAppointments.execute();
+      await appointmentRepository.cancelAppointment(event.appointmentId);
+
+      final appointments = await getAppointments.execute();
+
       emit(
         AppointmentsLoadedState(
           appointments: appointments,
@@ -99,7 +112,6 @@ class AppointmentsBloc extends Bloc<AppointmentsEvent, AppointmentsState> {
         ),
       );
     } catch (e) {
-      print("❌ Error al cancelar cita: $e");
       emit(
         AppointmentsErrorState(
           message: 'Error al cancelar cita: $e',
@@ -107,22 +119,24 @@ class AppointmentsBloc extends Bloc<AppointmentsEvent, AppointmentsState> {
           currentTab: state.currentTab,
         ),
       );
+
       await Future.delayed(const Duration(seconds: 2));
+
       try {
-        final appointments = await _getAppointments.execute();
+        final appointments = await getAppointments.execute();
+
         emit(
           AppointmentsLoadedState(
             appointments: appointments,
             currentTab: state.currentTab,
           ),
         );
-      } catch (e2) {
-        print("❌ Error al recargar citas: $e2");
-      }
+      } catch (_) {}
     }
   }
 
-  void _onChangeTab(ChangeTabEvent event, Emitter<AppointmentsState> emit) {
+  void _onChangeTab(
+      ChangeTabEvent event, Emitter<AppointmentsState> emit) {
     if (state is AppointmentsLoadedState) {
       emit(
         AppointmentsLoadedState(

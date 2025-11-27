@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:keicybarber/domain/usecases/get_appointments.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:intl/intl.dart';
 import 'package:intl/date_symbol_data_local.dart';
-import 'package:keicybarber/presentation/screens/schedule_location_screen.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
+
 import 'presentation/screens/welcome_screen.dart';
 import 'presentation/screens/home_screen.dart';
 import 'presentation/screens/login_screen.dart';
@@ -13,30 +15,45 @@ import 'presentation/screens/schedule_screen.dart';
 import 'presentation/screens/appointments_screen.dart';
 import 'presentation/screens/profile_screen.dart';
 import 'presentation/screens/forgot_password_screen.dart';
+import 'presentation/screens/schedule_location_screen.dart';
+
 import 'presentation/bloc/home/home_bloc.dart';
 import 'presentation/bloc/home/home_event.dart';
+
 import 'presentation/bloc/navigation/navigation_cubit.dart';
+
 import 'presentation/bloc/appointments/appointments_bloc.dart';
+
+import 'presentation/bloc/auth/auth_bloc.dart';
+import 'presentation/bloc/profile/profile_bloc.dart';
+import 'presentation/bloc/profile/profile_event.dart';
+
 import 'domain/usecases/get_services.dart';
 import 'domain/usecases/login_user.dart';
-import 'data/repositories/service_repository_impl.dart';
-import 'data/datasources/auth_data_source.dart';
-import 'data/datasources/profile_data_source.dart';
-import 'data/repositories/auth_repository_impl.dart';
 import 'domain/usecases/register_user.dart';
 import 'domain/usecases/reset_password.dart';
 import 'domain/usecases/logout_user.dart';
-import 'presentation/bloc/auth/auth_bloc.dart';
-import 'data/repositories/profile_repository_impl.dart';
 import 'domain/usecases/get_profile.dart';
 import 'domain/usecases/update_profile.dart';
-import 'presentation/bloc/profile/profile_bloc.dart';
-import 'presentation/bloc/profile/profile_event.dart';
-import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-String _toIntlTag(Locale l) => l.countryCode == null || l.countryCode!.isEmpty
-    ? l.languageCode
-    : '${l.languageCode}_${l.countryCode}';
+import 'data/datasources/auth_data_source.dart';
+import 'data/datasources/profile_data_source.dart';
+import 'data/datasources/service_data_source.dart';
+import 'data/datasources/appointment_data_source.dart';
+import 'data/datasources/location_data_source.dart';
+
+import 'data/repositories/auth_repository_impl.dart';
+import 'data/repositories/service_repository_impl.dart';
+import 'data/repositories/profile_repository_impl.dart';
+import 'data/repositories/appointment_repository_impl.dart';
+import 'data/repositories/location_repository_impl.dart';
+
+
+String _toIntlTag(Locale l) =>
+    l.countryCode == null || l.countryCode!.isEmpty
+        ? l.languageCode
+        : '${l.languageCode}_${l.countryCode}';
+
 
 Future<void> main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -44,47 +61,27 @@ Future<void> main() async {
   String? supabaseUrl;
   String? supabaseAnonKey;
 
-  // --- INICIO DEL BLOQUE DE DIAGNÓSTICO ---
   try {
     await dotenv.load(fileName: ".env");
-
-    print("¡ÉXITO! El archivo .env fue encontrado y cargado por el paquete.");
+    print("Archivo .env cargado correctamente.");
 
     supabaseUrl = dotenv.env['SUPABASE_URL'];
     supabaseAnonKey = dotenv.env['SUPABASE_ANON_KEY'];
 
     if (supabaseUrl == null || supabaseAnonKey == null) {
-      print(
-        "ERROR CRÍTICO: El archivo se leyó, pero una o ambas claves son NULAS.",
-      );
-      print(
-        "Por favor, revisa que los nombres en tu .env sean EXACTAMENTE 'SUPABASE_URL' y 'SUPABASE_ANON_KEY'.",
-      );
-      // Usar valores por defecto en lugar de return
+      print("Variables .env nulas. Usando valores por defecto.");
       supabaseUrl = 'https://sjczmvfxzaajruyxgrhy.supabase.co';
-      supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqY3ptdmZ4emFhanJ1eXhncmh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNzE1MzQsImV4cCI6MjA3NDc0NzUzNH0.gjRo2Jd2ielDgZJ60B2m0AzzOlJpi0MAsc_7AtVtARs';
+      supabaseAnonKey =
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqY3ptdmZ4emFhanJ1eXhncmh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNzE1MzQsImV4cCI6MjA3NDc0NzUzNH0.gjRo2Jd2ielDgZJ60B2m0AzzOlJpi0MAsc_7AtVtARs';
     }
   } catch (e) {
-    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-    print("¡FALLÓ LA CARGA DEL ARCHIVO .ENV!");
-    print("Se produjo una excepción: $e");
-    print(
-      "Esto casi siempre significa que el archivo .env no fue incluido en el 'build' de la app.",
-    );
-    print(
-      "Asegúrate de que está en la raíz del proyecto y en pubspec.yaml -> assets.",
-    );
-    print("!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!");
-    // Usar valores por defecto
+    print("Error cargando .env. Usando valores por defecto.");
     supabaseUrl = 'https://sjczmvfxzaajruyxgrhy.supabase.co';
-    supabaseAnonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqY3ptdmZ4emFhanJ1eXhncmh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNzE1MzQsImV4cCI6MjA3NDc0NzUzNH0.gjRo2Jd2ielDgZJ60B2m0AzzOlJpi0MAsc_7AtVtARs';
+    supabaseAnonKey =
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InNqY3ptdmZ4emFhanJ1eXhncmh5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkxNzE1MzQsImV4cCI6MjA3NDc0NzUzNH0.gjRo2Jd2ielDgZJ60B2m0AzzOlJpi0MAsc_7AtVtARs';
   }
 
-  // Inicializar Supabase
-  await Supabase.initialize(
-    url: supabaseUrl!,
-    anonKey: supabaseAnonKey!,
-  );
+  await Supabase.initialize(url: supabaseUrl!, anonKey: supabaseAnonKey!);
 
   final deviceLocale = WidgetsBinding.instance.platformDispatcher.locale;
   final initialTag = _toIntlTag(deviceLocale);
@@ -94,11 +91,13 @@ Future<void> main() async {
   runApp(const MyApp());
 }
 
+
 class MyApp extends StatefulWidget {
   const MyApp({super.key});
   @override
   State<MyApp> createState() => _MyAppState();
 }
+
 
 class _MyAppState extends State<MyApp> {
   @override
@@ -117,27 +116,37 @@ class _MyAppState extends State<MyApp> {
   Widget build(BuildContext context) {
     final primaryYellow = const Color(0xFFF2B705);
 
-    final serviceRepository = ServiceRepositoryImpl();
-    final getServicesUseCase = GetServices(serviceRepository);
-
     final supabaseClient = Supabase.instance.client;
+
     final authDataSource = AuthDataSourceImpl(supabaseClient);
     final profileDataSource = ProfileDataSourceImpl(supabaseClient);
+    final serviceDataSource = ServiceDataSource(supabaseClient);
+    final appointmentDataSource = AppointmentDataSource(supabaseClient);
+    final locationDataSource = LocationDataSource(supabaseClient);
 
     final authRepository = AuthRepositoryImpl(
       authDataSource: authDataSource,
       profileDataSource: profileDataSource,
     );
 
+    final profileRepository =
+        ProfileRepositoryImpl(profileDataSource: profileDataSource, client: supabaseClient);
+
+    final serviceRepository =
+        ServiceRepositoryImpl(serviceDataSource);
+
+    final appointmentRepository =
+        AppointmentRepositoryImpl(appointmentDataSource);
+
+    final locationRepository =
+        LocationRepositoryImpl(locationDataSource);
+
+    final getServicesUseCase = GetServices(serviceRepository);
+
     final registerUserUseCase = RegisterUser(authRepository);
     final loginUserUseCase = LoginUser(authRepository);
     final resetPasswordUseCase = ResetPassword(authRepository);
     final logoutUserUseCase = LogoutUser(authRepository);
-
-    final profileRepository = ProfileRepositoryImpl(
-      profileDataSource: profileDataSource,
-      client: supabaseClient,
-    );
 
     final getProfileUseCase = GetProfile(profileRepository);
     final updateProfileUseCase = UpdateProfile(profileRepository);
@@ -148,7 +157,11 @@ class _MyAppState extends State<MyApp> {
           create: (context) =>
               HomeBloc(getServices: getServicesUseCase)..add(LoadHome()),
         ),
-        BlocProvider<NavigationCubit>(create: (context) => NavigationCubit()),
+
+        BlocProvider<NavigationCubit>(
+          create: (context) => NavigationCubit(),
+        ),
+
         BlocProvider<AuthBloc>(
           create: (context) => AuthBloc(
             registerUserUseCase: registerUserUseCase,
@@ -157,16 +170,22 @@ class _MyAppState extends State<MyApp> {
             logoutUserUseCase: logoutUserUseCase,
           ),
         ),
+
         BlocProvider<ProfileBloc>(
           create: (context) => ProfileBloc(
             getProfileUseCase: getProfileUseCase,
             updateProfileUseCase: updateProfileUseCase,
           )..add(LoadUserProfile()),
         ),
+
         BlocProvider<AppointmentsBloc>(
-          create: (context) => AppointmentsBloc(),
+          create: (context) => AppointmentsBloc(
+            getAppointments: GetAppointments(appointmentRepository),
+            appointmentRepository: appointmentRepository,
+          ),
         ),
       ],
+
       child: MaterialApp(
         debugShowCheckedModeBanner: false,
         title: 'Peluquería Keicy',
@@ -188,8 +207,7 @@ class _MyAppState extends State<MyApp> {
           Locale('en'),
         ],
         localeResolutionCallback: (locale, supported) {
-          final chosen =
-              locale ??
+          final chosen = locale ??
               WidgetsBinding.instance.platformDispatcher.locale ??
               supported.first;
           final tag = _toIntlTag(chosen);
@@ -198,6 +216,7 @@ class _MyAppState extends State<MyApp> {
           return chosen;
         },
 
+        // -------- RUTAS --------
         home: const WelcomeScreen(),
         routes: {
           '/login': (context) => const LoginScreen(),
@@ -205,8 +224,11 @@ class _MyAppState extends State<MyApp> {
           '/forgot-password': (context) => const ForgotPasswordScreen(),
           '/home': (context) => const RootScreen(),
           '/schedule': (context) => const ScheduleScreen(),
+
+          // Se inyecta el usecase desde arriba. Solo recibe los ids.
           '/schedule-location': (context) =>
-              ScheduleLocationScreen(selectedServiceIds: <String>{}),
+              ScheduleLocationScreen(selectedServiceIds: <String>{}, totalDurationMinutes: 0,),
+
           '/appointments': (context) => const AppointmentsScreen(),
           '/profile': (context) => const ProfileScreen(),
         },
@@ -214,6 +236,7 @@ class _MyAppState extends State<MyApp> {
     );
   }
 }
+
 
 class RootScreen extends StatelessWidget {
   const RootScreen({super.key});

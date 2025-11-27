@@ -1,28 +1,44 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+
 import 'package:keicybarber/data/repositories/barber_repository_impl.dart';
 import 'package:keicybarber/data/repositories/appointment_repository_impl.dart';
-import 'package:keicybarber/data/repositories/service_repository_impl.dart';
+import 'package:keicybarber/data/datasources/barber_data_source.dart';
+import 'package:keicybarber/data/datasources/appointment_data_source.dart';
+
 import 'package:keicybarber/presentation/bloc/schedule/barber_bloc.dart';
 import 'package:keicybarber/presentation/screens/schedule_summary_screen.dart';
 
 class ScheduleBarberScreen extends StatelessWidget {
   final Set<String> selectedServiceIds;
   final String selectedLocationId;
+  final int totalDurationMinutes;
 
   const ScheduleBarberScreen({
     super.key,
     required this.selectedServiceIds,
     required this.selectedLocationId,
+    required this.totalDurationMinutes,
   });
 
   @override
   Widget build(BuildContext context) {
+    final client = Supabase.instance.client;
+
+    final barberRepository = BarberRepositoryImpl(
+      BarberDataSource(client),
+    );
+
+    final appointmentRepository = AppointmentRepositoryImpl(
+      AppointmentDataSource(client),
+    );
+
     return BlocProvider(
       create: (context) => BarberBloc(
-        barberRepository: BarberRepositoryImpl(),
-        appointmentRepository: AppointmentRepositoryImpl(),
+        barberRepository: barberRepository,
+        appointmentRepository: appointmentRepository,
       )..add(LoadBarbersByLocation(selectedLocationId)),
       child: Scaffold(
         appBar: AppBar(
@@ -33,6 +49,7 @@ class ScheduleBarberScreen extends StatelessWidget {
         body: _ScheduleBarberView(
           selectedServiceIds: selectedServiceIds,
           selectedLocationId: selectedLocationId,
+          totalDurationMinutes: totalDurationMinutes,
         ),
       ),
     );
@@ -42,10 +59,12 @@ class ScheduleBarberScreen extends StatelessWidget {
 class _ScheduleBarberView extends StatelessWidget {
   final Set<String> selectedServiceIds;
   final String selectedLocationId;
+  final int totalDurationMinutes;
 
   const _ScheduleBarberView({
     required this.selectedServiceIds,
     required this.selectedLocationId,
+    required this.totalDurationMinutes,
   });
 
   List<DateTime> _nextDays({int count = 7}) {
@@ -69,12 +88,15 @@ class _ScheduleBarberView extends StatelessWidget {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // Header
         Container(
           width: double.infinity,
           padding: const EdgeInsets.fromLTRB(20, 20, 20, 24),
           decoration: BoxDecoration(
             color: yellow,
-            borderRadius: const BorderRadius.vertical(bottom: Radius.circular(16)),
+            borderRadius: const BorderRadius.vertical(
+              bottom: Radius.circular(16),
+            ),
           ),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -104,7 +126,10 @@ class _ScheduleBarberView extends StatelessWidget {
               }
               if (state is BarberLoaded) {
                 if (state.barbers.isEmpty) {
-                  return const Center(child: Text('No hay barberos disponibles en esta sede.'));
+                  return const Center(
+                    child:
+                        Text('No hay barberos disponibles en esta sede.'),
+                  );
                 }
 
                 return ListView.builder(
@@ -115,12 +140,17 @@ class _ScheduleBarberView extends StatelessWidget {
                     final isSelected = state.selectedBarberId == barber.id;
 
                     return GestureDetector(
-                      onTap: () => context.read<BarberBloc>().add(SelectBarber(barber.id)),
+                      onTap: () => context
+                          .read<BarberBloc>()
+                          .add(SelectBarber(barber.id)),
                       child: Card(
                         margin: const EdgeInsets.only(bottom: 12),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(12),
-                          side: BorderSide(color: isSelected ? yellow : Colors.transparent, width: 2),
+                          side: BorderSide(
+                            color: isSelected ? yellow : Colors.transparent,
+                            width: 2,
+                          ),
                         ),
                         child: Padding(
                           padding: const EdgeInsets.all(12.0),
@@ -130,21 +160,38 @@ class _ScheduleBarberView extends StatelessWidget {
                               // Encabezado barbero
                               ListTile(
                                 contentPadding: EdgeInsets.zero,
-                                leading: const CircleAvatar(child: Icon(Icons.person)),
-                                title: Text(barber.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                                subtitle: Text(barber.specialtys.join(', ')),
+                                leading: const CircleAvatar(
+                                  child: Icon(Icons.person),
+                                ),
+                                title: Text(
+                                  barber.name,
+                                  style: const TextStyle(
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                subtitle:
+                                    Text(barber.specialtys.join(', ')),
                                 trailing: Row(
                                   mainAxisSize: MainAxisSize.min,
                                   children: [
                                     Text(barber.rating.toString()),
-                                    const Icon(Icons.star, color: Colors.amber, size: 16),
+                                    const Icon(
+                                      Icons.star,
+                                      color: Colors.amber,
+                                      size: 16,
+                                    ),
                                   ],
                                 ),
                               ),
 
                               if (isSelected) ...[
                                 const SizedBox(height: 8),
-                                const Text('Seleccionar una fecha', style: TextStyle(fontWeight: FontWeight.w600)),
+                                const Text(
+                                  'Seleccionar una fecha',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w600,
+                                  ),
+                                ),
                                 const SizedBox(height: 8),
 
                                 // Chips de fecha
@@ -152,42 +199,58 @@ class _ScheduleBarberView extends StatelessWidget {
                                   scrollDirection: Axis.horizontal,
                                   child: Row(
                                     children: days.map((d) {
-                                      final isActive = state.selectedDate != null &&
-                                          d.year == state.selectedDate!.year &&
-                                          d.month == state.selectedDate!.month &&
-                                          d.day == state.selectedDate!.day;
+                                      final isActive =
+                                          state.selectedDate != null &&
+                                              d.year ==
+                                                  state.selectedDate!.year &&
+                                              d.month ==
+                                                  state.selectedDate!.month &&
+                                              d.day ==
+                                                  state.selectedDate!.day;
 
-                                      final localeTag = Intl.getCurrentLocale();
-                                      final raw = DateFormat('EEE d', localeTag).format(d).replaceAll('.', '');
+                                      final localeTag =
+                                          Intl.getCurrentLocale();
+                                      final raw = DateFormat(
+                                        'EEE d',
+                                        localeTag,
+                                      ).format(d).replaceAll('.', '');
                                       final label = _capFirst(raw);
 
                                       return Padding(
-                                        padding: const EdgeInsets.only(right: 8.0),
+                                        padding:
+                                            const EdgeInsets.only(right: 8.0),
                                         child: ChoiceChip(
                                           label: Text(label),
                                           selected: isActive,
-                                          onSelected: (_) async {
-                                            final services = await ServiceRepositoryImpl().getServices();
-                                            final requiredMinutes = services
-                                                .where((s) => selectedServiceIds.contains(s.id))
-                                                .fold<int>(0, (acc, s) => acc + s.durationMinutes);
-
+                                          onSelected: (_) {
                                             context.read<BarberBloc>().add(
                                                   SelectBarberDate(
                                                     d,
-                                                    requiredMinutes: requiredMinutes,
-                                                    locationId: int.tryParse(selectedLocationId) ?? 0,
+                                                    requiredMinutes:
+                                                        totalDurationMinutes,
+                                                    locationId:
+                                                        int.tryParse(
+                                                              selectedLocationId,
+                                                            ) ??
+                                                            0,
                                                   ),
                                                 );
                                           },
                                           shape: StadiumBorder(
-                                            side: BorderSide(color: isActive ? yellow : Colors.grey.shade300),
+                                            side: BorderSide(
+                                              color: isActive
+                                                  ? yellow
+                                                  : Colors
+                                                      .grey.shade300,
+                                            ),
                                           ),
                                           selectedColor: Colors.white,
                                           showCheckmark: false,
                                           labelStyle: TextStyle(
                                             color: Colors.black,
-                                            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                                            fontWeight: isActive
+                                                ? FontWeight.bold
+                                                : FontWeight.normal,
                                           ),
                                         ),
                                       );
@@ -197,43 +260,65 @@ class _ScheduleBarberView extends StatelessWidget {
 
                                 if (state.selectedDate != null) ...[
                                   const SizedBox(height: 16),
-                                  const Text('Seleccionar una hora', style: TextStyle(fontWeight: FontWeight.w600)),
+                                  const Text(
+                                    'Seleccionar una hora',
+                                    style: TextStyle(
+                                      fontWeight: FontWeight.w600,
+                                    ),
+                                  ),
                                   const SizedBox(height: 8),
 
-                                  // Chips de hora
                                   if (state.availableSlots.isEmpty)
                                     const Padding(
-                                      padding: EdgeInsets.symmetric(vertical: 8.0),
-                                      child: Text('Sin horarios disponibles para este día.'),
+                                      padding: EdgeInsets.symmetric(
+                                        vertical: 8.0,
+                                      ),
+                                      child: Text(
+                                        'Sin horarios disponibles para este día.',
+                                      ),
                                     )
                                   else
                                     Wrap(
                                       spacing: 8,
                                       runSpacing: 8,
-                                      children: state.availableSlots.map((t) {
-                                        final isActive = state.selectedTime != null &&
-                                            state.selectedTime!.hour == t.hour &&
-                                            state.selectedTime!.minute == t.minute;
+                                      children:
+                                          state.availableSlots.map((t) {
+                                        final isActive =
+                                            state.selectedTime != null &&
+                                                state.selectedTime!.hour ==
+                                                    t.hour &&
+                                                state.selectedTime!.minute ==
+                                                    t.minute;
 
                                         final formatted = t.format(context);
 
                                         return ChoiceChip(
                                           label: Text(formatted),
                                           selected: isActive,
-                                          onSelected: (_) => context.read<BarberBloc>().add(SelectBarberTime(t)),
+                                          onSelected: (_) {
+                                            context
+                                                .read<BarberBloc>()
+                                                .add(SelectBarberTime(t));
+                                          },
                                           shape: StadiumBorder(
-                                            side: BorderSide(color: isActive ? yellow : Colors.grey.shade300),
+                                            side: BorderSide(
+                                              color: isActive
+                                                  ? yellow
+                                                  : Colors
+                                                      .grey.shade300,
+                                            ),
                                           ),
                                           selectedColor: Colors.white,
                                           showCheckmark: false,
                                           labelStyle: TextStyle(
                                             color: Colors.black,
-                                            fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                                            fontWeight: isActive
+                                                ? FontWeight.bold
+                                                : FontWeight.normal,
                                           ),
                                         );
                                       }).toList(),
                                     ),
-
                                   const SizedBox(height: 8),
                                 ],
                               ],
@@ -269,14 +354,16 @@ class _ScheduleBarberView extends StatelessWidget {
                 padding: const EdgeInsets.all(16.0),
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.of(context).push(MaterialPageRoute(
-                      builder: (_) => ScheduleSummaryScreen(
-                        selectedServiceIds: selectedServiceIds,
-                        selectedLocationId: selectedLocationId,
-                        selectedBarberId: state.selectedBarberId!,
-                        selectedDateTime: selectedDateTime,
+                    Navigator.of(context).push(
+                      MaterialPageRoute(
+                        builder: (_) => ScheduleSummaryScreen(
+                          selectedServiceIds: selectedServiceIds,
+                          selectedLocationId: selectedLocationId,
+                          selectedBarberId: state.selectedBarberId!,
+                          selectedDateTime: selectedDateTime,
+                        ),
                       ),
-                    ));
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     minimumSize: const Size(double.infinity, 50),
